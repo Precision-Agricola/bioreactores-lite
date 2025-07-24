@@ -6,7 +6,7 @@ COMPRESSOR_B_PIN = 4    # IO4  – Compresor B
 PUMP_RELAY_PIN = 26     # IO26 – Rele bomba
 INDICATOR_PIN = 12      # IO12 – Indicador visual
 
-FLOW_PIN = 19           # IO19 – Sensor de flujo
+FLOW_SENSOR_PIN = 19    # IO19 – Sensor de flujo
 BUTTON_PIN = 18         # IO18 – Botón
 
 SCL_PIN = 23
