@@ -1,5 +1,7 @@
+# tasks/control_task.py
+
 import uasyncio as asyncio
-from machine import Pin, ticks_ms, ticks_diff
+from machine import Pin
 from config.pins import BUTTON_PIN
 from config.runtime import AUTO_PUMP_INTERVAL_MIN, AUTO_PUMP_DURATION_MIN
 from hw.relay_controller import controller as relays

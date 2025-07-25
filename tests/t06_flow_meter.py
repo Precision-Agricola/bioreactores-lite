@@ -1,13 +1,15 @@
 # tests/t06_flow_meter.py
-import uasyncio as asyncio, time, gc
+
+import uasyncio as asyncio
+import time, gc
 from machine import Pin, PWM
 from config.pins import FLOW_SENSOR_PIN
 from sensors.flow_meter import FlowMeter
 
-FLOW_GEN_PIN = 27     # pin libre para generar pulsos
-PWM_FREQ_HZ = 22      # ≈ 2 L/min para YF‑B1 -> 22 Hz según fórmula
+FLOW_GEN_PIN = 27
+PWM_FREQ_HZ = 22
 
-fm = FlowMeter("YF-B1")     # factor (F+3)/11
+fm = FlowMeter("YF-B1")
 
 async def generate_pulses(seconds=5):
     pwm = PWM(Pin(FLOW_GEN_PIN), freq=PWM_FREQ_HZ, duty=512)

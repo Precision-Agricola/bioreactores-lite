@@ -1,9 +1,10 @@
 # hw/button.py
+
 import uasyncio as asyncio
 from machine import Pin
 from config.pins import BUTTON_PIN
 from hw.relay_controller import controller as relays
-from utils.logger import info
+from utils.logger import info, debug
 
 _POLL_MS      = 10      # periodo de sondeo
 _DEBOUNCE_MS  = 30      # tiempo estable requerido (≥30 ms)
@@ -22,6 +23,8 @@ class Button:
                     if val == 0:                 # pulsador activo‑bajo
                         relays.toggle_pump()
                         info("Button → pump toggled")
+                    else:
+                        debug("Button released")
                     self._last = val
             await asyncio.sleep_ms(_POLL_MS)
 
