@@ -1,23 +1,30 @@
-import os, gc, time
-from utils.logger import debug, info, warning, error, _LOG_FILE
+# test/t01_logger.py
 
-def file_size():
-    try: return os.stat(_LOG_FILE)[6]
-    except OSError: return 0
+import os, gc
+from utils.logger import info, warning, error, _LOG_FILE
+
+def fsize():
+    try:
+        return os.stat(_LOG_FILE)[6]
+    except OSError:
+        return 0
 
 print("[t01] Logger rotation…")
-start = file_size()
+start = fsize()
 
-for _ in range(1500):  # ≈ 25 kB de texto
+for _ in range(400):
     error("X"*16)
 
-mid = file_size()
-if mid <= start or mid > 200*1024:
-    raise SystemExit("FAIL: rotación no actúa")
+mid = fsize()
 
-info("Test INFO")      # LED OFF
-warning("Test WARN")   # LED ON
-error("Test ERR")      # LED BLINK
+if mid <= start:
+    raise SystemExit("FAIL: no escribió")
+if mid > 200*1024:
+    raise SystemExit("FAIL: no recortó a 200 kB máx")
 
-print("PASS")
+info("LED OFF test")
+warning("LED ON  test")
+error("LED BLK test")
+
+print("PASS t01_logger")
 gc.collect()

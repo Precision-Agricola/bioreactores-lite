@@ -1,29 +1,4 @@
-"""
-utils/logger.py
-----------------
-Light‑weight rotating logger for MicroPython.
-
-Features
-========
-• Four levels accepted: DEBUG, INFO, WARNING, ERROR  
-  (Indicator LED only reacts to INFO / WARNING / ERROR.)  
-• Timestamped lines in local time if an RTC is present, otherwise ticks_ms.  
-• File rotation: keeps the newest ~100 kB when the file reaches 200 kB.  
-• Non‑blocking: no sleeps, < 1 ms per call on ESP32.  
-• External modules may call ``set_level()`` to change the global verbosity.
-
-Usage
-=====
->>> from utils.logger import info, warning, error, debug
->>> info("System boot OK")
->>> warning("Water level low")
->>> error("Pump stalled")
-
-You can also *disable* DEBUG output in production:
-
->>> import utils.logger as log
->>> log.set_level("INFO")   # now debug() lines are ignored
-"""
+# utils/logger.py 
 
 import os, time
 from hw.indicator import set_level
