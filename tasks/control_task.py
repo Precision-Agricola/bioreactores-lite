@@ -1,47 +1,29 @@
 # tasks/control_task.py
 
 import uasyncio as asyncio
-from machine import Pin
-from config.pins import BUTTON_PIN
 from config.runtime import AUTO_PUMP_INTERVAL_MIN, AUTO_PUMP_DURATION_MIN
 from hw.relay_controller import controller as relays
 from utils.logger import info, warning
 
-_POLL_MS      = 10
-_DEBOUNCE_MS  = 30
-
-async def _button_loop():
-    btn = Pin(BUTTON_PIN, Pin.IN, Pin.PULL_UP)
-    last = btn.value()
-    while True:
-        v = btn.value()
-        if v != last:
-            await asyncio.sleep_ms(_DEBOUNCE_MS)
-            if btn.value() == v and v == 0:
-                relays.toggle_pump()
-                info("Button → pump toggled (manual override)")
-            last = v
-        await asyncio.sleep_ms(_POLL_MS)
-
-async def _auto_loop():
-    while True:
+async def _auto_pump_loop():
+   while True:
         await asyncio.sleep(AUTO_PUMP_INTERVAL_MIN * 60)
 
+        auto_turned_on = False
+
         if not relays.pump_is_on():
-            info("Auto pump ON")
+            info("Auto pump routine: Turning ON")
             relays.toggle_pump()
-            auto_on = True
-        else:
-            auto_on = False
+            auto_turned_on = True
 
         await asyncio.sleep(AUTO_PUMP_DURATION_MIN * 60)
 
-        if auto_on and relays.pump_is_on():
+        if auto_turned_on and relays.pump_is_on():
             relays.toggle_pump()
-            info("Auto pump OFF")
-        elif auto_on:
-            warning("Auto cycle wanted OFF but pump already changed")
+            info("Auto pump routine: Turning OFF")
+        elif auto_turned_on:
+            warning("Auto routine expected to turn pump OFF, but it was already off.")
 
 def start():
-    asyncio.create_task(_button_loop())
-    asyncio.create_task(_auto_loop())
+    info("Starting high-level control tasks...")
+    asyncio.create_task(_auto_pump_loop())
