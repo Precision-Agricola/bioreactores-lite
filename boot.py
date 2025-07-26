@@ -10,7 +10,7 @@ print("\n" + "="*40)
 print("  BIOREACTOR IOT - INICIANDO SISTEMA")
 print("="*40)
 
-dip_demo = machine.Pin(DIP_SWITCH_DEMO_PIN, machine.Pin.IN, machine.Pin.PULL_UP)
+dip_demo = machine.Pin(DIP_SWITCH_DEMO_PIN, machine.Pin.IN, machine.Pin.PULL_DOWN)
 
 if dip_demo.value() == 0:
     system_state.set_mode('DEMO')
@@ -19,8 +19,6 @@ else:
 
 try:
     ds = DS3231(i2c())
-    if ds.osf():
-        print("ALERTA: RTC ha perdido energía. La hora puede no ser fiable.")
     machine.RTC().datetime(ds.datetime())
     print("RTC Sincronizado:", time.localtime())
 except Exception as e:

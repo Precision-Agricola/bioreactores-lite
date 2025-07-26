@@ -4,8 +4,8 @@ from machine import Pin, SoftI2C
 
 COMPRESSOR_A_PIN = 0    # IO2  – Compresor A
 COMPRESSOR_B_PIN = 4    # IO4  – Compresor B
-PUMP_RELAY_PIN = 14     # IO14 – Rele bomba
-INDICATOR_PIN = 12      # IO12 – Indicador visual
+PUMP_RELAY_PIN = 14     # IO14 – Rele bomba - RELAY CHANNEL 2
+INDICATOR_PIN = 12      # IO12 – Indicador visual - RELAY CHANNEL 3
 
 FLOW_SENSOR_PIN = 18    # IO19 – Sensor de flujo
 BUTTON_PIN = 19         # IO18 – Botón

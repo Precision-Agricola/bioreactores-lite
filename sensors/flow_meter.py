@@ -2,6 +2,7 @@
 
 import uasyncio as asyncio
 from machine import Pin
+import machine
 from time import ticks_ms, ticks_diff
 from config.pins import FLOW_SENSOR_PIN
 from utils.logger import debug
@@ -29,10 +30,10 @@ class FlowMeter:
     async def task(self, interval_s=5, cb=None):
         while True:
             await asyncio.sleep(interval_s)
-            irq_state = Pin.irq_disable()
+            irq_state = machine.disable_irq()
             pulses = self._cnt
             self._cnt = 0
-            Pin.irq_enable(irq_state)
+            machine.enable_irq(irq_state)
             f_hz = pulses / interval_s
             lpm = self._to_lpm(f_hz)
             debug("Flow %.2f L/min" % lpm)

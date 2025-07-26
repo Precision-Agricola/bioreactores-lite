@@ -44,5 +44,5 @@ class Relay:
 # Instancias globales (singletons)
 compressor_a = Relay(COMPRESSOR_A_PIN)
 compressor_b = Relay(COMPRESSOR_B_PIN)
-pump_relay   = Relay(PUMP_RELAY_PIN)
+pump_relay   = Relay(PUMP_RELAY_PIN, active_high=True)
 indicator_rl = Relay(INDICATOR_PIN)
