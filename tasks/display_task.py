@@ -1,24 +1,29 @@
 # tasks/display_task.py
 
 import uasyncio as asyncio
-from machine import ticks_ms, ticks_diff
-from ui.display import init as lcd_init, write
+from time import time
 from hw.relay_controller import controller as relays
 from hw.relays import compressor_a, compressor_b
+from ui.display import init as lcd_init, write
 
-_BOOT_MS = ticks_ms()
+start_timestamp = 0
 
 async def _loop():
     while True:
-        days = ticks_diff(ticks_ms(), _BOOT_MS) // 86_400_000 + 1
+        if start_timestamp > 0:
+            seconds_elapsed = time() - start_timestamp
+            days = (seconds_elapsed // 86400) + 1
+            day_line = f"Day {int(days)}"
+        else:
+            day_line = "RTC not set"
 
-        pump_line = "Pump ON " if relays.pump_is_on() else "Pump OFF"
+        pump_line = "Pump ON" if relays.pump_is_on() else "Pump OFF"
 
-        h_a = compressor_a.hours() if compressor_a.is_on() else 0
-        h_b = compressor_b.hours() if compressor_b.is_on() else 0
+        h_a = compressor_a.hours()
+        h_b = compressor_b.hours()
 
         write((
-            f"Day {days}",
+            day_line,
             pump_line,
             f"CompA {h_a:5.1f}h",
             f"CompB {h_b:5.1f}h",
@@ -28,3 +33,7 @@ async def _loop():
 def start():
     lcd_init()
     asyncio.create_task(_loop())
+
+def set_start_time(timestamp):
+    global start_timestamp
+    start_timestamp = timestamp
