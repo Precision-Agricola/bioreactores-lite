@@ -3,6 +3,7 @@
 import uasyncio
 import time
 import uos
+from machine import WDT
 from utils.logger import info, error
 import system_state
 
@@ -12,12 +13,20 @@ from sensors.flow_meter import FlowMeter
 from tasks import control_task, display_task
 
 _START_TIME_FILE = "start_time.txt"
+_WDT_TIMEOUT_MS = 300000
+
+try:
+    wdt = WDT(timeout=_WDT_TIMEOUT_MS)
+    info(f"Watchdog activado. Timeout: {_WDT_TIMEOUT_MS / 1000}s")
+except Exception as e:
+    wdt = None
+    error(f"No se pudo iniciar el watchdog: {e}")
+
 
 start_timestamp = 0
 try:
     with open(_START_TIME_FILE, "r") as f:
         start_timestamp = int(f.read())
-
 except OSError:
     info("Primer arranque detectado. Creando archivo de tiempo de inicio.")
     try:
@@ -25,48 +34,39 @@ except OSError:
         with open(_START_TIME_FILE, "w") as f: f.write(str(start_timestamp))
     except Exception as e:
         error(f"No se pudo crear el archivo de inicio: {e}")
-
 display_task.set_start_time(start_timestamp)
 
-async def emergency_loop():
-    """Bucle simple y robusto para el modo de emergencia."""
-    info("!!! MODO EMERGENCIA ACTIVADO !!!")
-    info("Ejecutando alternancia de aireadores cada 3 horas.")
-    while True:
-        relays.set_compressors(a_on=True)
-        info("EMERGENCIA: Aireador A ENCENDIDO.")
-        await uasyncio.sleep(3 * 3600) # Espera 3 horas
+async def main():
+    """Función principal que lanza tareas y supervisa el sistema."""
+    CURRENT_MODE = system_state.get_mode()
 
-        relays.set_compressors(a_on=False)
-        info("EMERGENCIA: Aireador B ENCENDIDO.")
-        await uasyncio.sleep(3 * 3600) # Espera 3 horas
+    if CURRENT_MODE == 'EMERGENCY':
+        info("!!! MODO EMERGENCIA ACTIVADO !!!")
+        info("Ejecutando alternancia de aireadores cada 3 horas.")
+        uasyncio.create_task(control_task._compressor_loop())
 
-async def normal_operation_loop():
-    """Bucle para operación normal y demo, inicia todas las tareas."""
-    info("Iniciando todas las tareas del sistema...")
-    flow_meter = FlowMeter()
-    control_task.start()
-    display_task.start()
-    uasyncio.create_task(button.button.run())
-    uasyncio.create_task(flow_meter.task())
-    info("Todas las tareas han sido lanzadas.")
+    elif CURRENT_MODE != 'PROGRAM':
+        info("Iniciando tareas de operación normal/demo...")
+        flow_meter = FlowMeter()
+        control_task.start()
+        display_task.start()
+        uasyncio.create_task(button.button.run())
+        uasyncio.create_task(flow_meter.task())
+        info("Todas las tareas han sido lanzadas.")
+
     while True:
+        if wdt:
+            wdt.feed()
         await uasyncio.sleep(60)
 
 CURRENT_MODE = system_state.get_mode()
 
-try:
-    if CURRENT_MODE == 'EMERGENCY':
-        uasyncio.run(emergency_loop())
-        
-    elif CURRENT_MODE == 'PROGRAM':
-        info("Modo PROGRAM activo. No se inician tareas.")
-        info("REPL disponible para programación.")
-        
-    else:
-        uasyncio.run(normal_operation_loop())
-
-except KeyboardInterrupt:
-    info("Sistema detenido por el usuario.")
-finally:
-    info("Finalizando ejecución.")
+if CURRENT_MODE == 'PROGRAM':
+    info("Modo PROGRAM activo. No se inician tareas. REPL disponible.")
+else:
+    try:
+        uasyncio.run(main())
+    except KeyboardInterrupt:
+        info("Sistema detenido por el usuario.")
+    finally:
+        info("Finalizando ejecución.")
