@@ -1,8 +1,7 @@
 # sensors/flow_meter.py
 
 import uasyncio as asyncio
-from machine import Pin
-import machine
+from machine import Pin, disable_irq, enable_irq
 from time import ticks_ms, ticks_diff
 from config.pins import FLOW_SENSOR_PIN
 from utils.logger import debug
@@ -11,7 +10,9 @@ _FORMULAS = {
     "YF-B1": lambda f_hz: (f_hz + 3) / 11,
     "YF-B6": lambda f_hz: f_hz / 6.6,
 }
+
 _MIN_GAP_MS = 2
+_LPM_THRESHOLD = 0.3
 
 class FlowMeter:
     def __init__(self, model="YF-B1"):
@@ -30,12 +31,18 @@ class FlowMeter:
     async def task(self, interval_s=5, cb=None):
         while True:
             await asyncio.sleep(interval_s)
-            irq_state = machine.disable_irq()
+            
+            irq_state = disable_irq()
             pulses = self._cnt
             self._cnt = 0
-            machine.enable_irq(irq_state)
+            enable_irq(irq_state)
+            
             f_hz = pulses / interval_s
             lpm = self._to_lpm(f_hz)
-            debug("Flow %.2f L/min" % lpm)
+
+            if lpm < _LPM_THRESHOLD:
+                lpm = 0.0
+
+            debug(f"Flow {lpm:.2f} L/min")
             if cb:
                 cb(lpm)
