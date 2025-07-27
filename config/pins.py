@@ -13,8 +13,8 @@ BUTTON_PIN = 19         # IO18 – Botón
 SCL_PIN = 23
 SDA_PIN = 21
 
-DIP_SWITCH_DEMO_PIN = 25  # Pin para activar el MODO DEMO
-DIP_SWITCH_SPARE_PIN = 26 # Pin de repuesto para futuros modos
+MODE_SW1_PIN = 25  # Pin para activar el MODO DEMO
+MODE_SW2_PIN= 26 # Pin de repuesto para futuros modos
 
 def i2c():
     return SoftI2C(scl=Pin(SCL_PIN), sda=Pin(SDA_PIN))
