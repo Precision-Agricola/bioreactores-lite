@@ -1,0 +1,34 @@
+name: Create Release and Package Source Code
+
+on:
+    push:
+        tags:
+            - 'v*'
+
+jobs:
+    build-and-release:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checout code
+              uses: actions/checkout@v4
+
+            - name: Zip device folder
+              run: zip -r device-${{ github.ref_name }}.zip device
+
+            - name: Create Release
+              uses: actions/create-release@v1
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with: 
+                tag-name: ${{ github.ref_name }}
+                release-name: Release ${{ github.ref_name }}
+
+                body: |
+                  Firmware automatic release (device) source code
+                
+                draft: false
+                prerelease: false
+
+                files:
+                    device-${{ github.ref_name }}.zip
