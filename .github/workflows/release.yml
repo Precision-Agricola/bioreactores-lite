@@ -20,15 +20,11 @@ jobs:
               uses: actions/create-release@v1
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with: 
-                tag-name: ${{ github.ref_name }}
-                release-name: Release ${{ github.ref_name }}
-
+              with:
+                tag_name: ${{ github.ref_name }}
+                release_name: Release ${{ github.ref_name }}
                 body: |
-                  Firmware automatic release (device) source code
-                
+                  Release automático del firmware contenido en la carpeta `device`.
                 draft: false
                 prerelease: false
-
-                files:
-                    device-${{ github.ref_name }}.zip
+                files: device-${{ github.ref_name }}.zip     
