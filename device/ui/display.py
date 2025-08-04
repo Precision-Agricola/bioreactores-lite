@@ -1,4 +1,4 @@
-# ui/display.py
+# device/ui/display.py
 
 from config.pins import i2c
 from utils.drivers.machine_i2c_lcd import I2cLcd

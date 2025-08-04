@@ -1,4 +1,4 @@
-# boot.py
+# device/boot.py
 
 import gc
 import machine

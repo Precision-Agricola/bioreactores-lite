@@ -1,4 +1,4 @@
-# sensors/flow_meter.py
+# device/sensors/flow_meter.py
 
 import uasyncio as asyncio
 from machine import Pin, disable_irq, enable_irq

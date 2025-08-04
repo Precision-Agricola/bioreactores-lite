@@ -1,4 +1,4 @@
-# system_state.py
+# device/system_state.py
 
 from config import runtime
 

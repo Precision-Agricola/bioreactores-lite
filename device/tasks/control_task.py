@@ -1,4 +1,4 @@
-# tasks/control_task.py
+# device/tasks/control_task.py
 
 import uasyncio as asyncio
 from config import runtime

@@ -1,4 +1,4 @@
-# main.py
+# device/main.py
 
 import uasyncio
 import time
