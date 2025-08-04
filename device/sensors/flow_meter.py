@@ -18,15 +18,19 @@ class FlowMeter:
     def __init__(self, model="YF-B1"):
         self._to_lpm = _FORMULAS.get(model.upper(), _FORMULAS["YF-B1"])
         self._cnt = 0
-        self._last = ticks_ms()
+        self._last_ts = ticks_ms()
+        self.lpm = 0.0
         pin = Pin(FLOW_SENSOR_PIN, Pin.IN, Pin.PULL_UP)
         pin.irq(self._irq, Pin.IRQ_RISING)
 
     def _irq(self, pin):
         now = ticks_ms()
-        if ticks_diff(now, self._last) >= _MIN_GAP_MS:
+        if ticks_diff(now, self._last_ts) >= _MIN_GAP_MS:
             self._cnt += 1
-            self._last = now
+            self._last_ts = now
+
+    def get_lpm(self):
+        return self.lpm
 
     async def task(self, interval_s=5, cb=None):
         while True:
@@ -38,11 +42,15 @@ class FlowMeter:
             enable_irq(irq_state)
             
             f_hz = pulses / interval_s
-            lpm = self._to_lpm(f_hz)
-
-            if lpm < _LPM_THRESHOLD:
-                lpm = 0.0
-
-            debug(f"Flow {lpm:.2f} L/min")
+            current_lpm = self._to_lpm(f_hz)
+            
+            if current_lpm < _LPM_THRESHOLD:
+                current_lpm = 0.0
+            
+            self.lpm = current_lpm
+            
+            debug(f"Flow {self.lpm:.2f} L/min")
             if cb:
-                cb(lpm)
+                cb(self.lpm)
+
+flow_meter = FlowMeter()

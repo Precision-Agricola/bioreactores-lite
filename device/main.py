@@ -1,5 +1,4 @@
-# device/main.py
-
+# main.py
 import uasyncio
 import time
 import uos
@@ -7,14 +6,20 @@ from machine import WDT
 from utils.logger import info, error
 import system_state
 
+# --- Hardware & Sensores ---
 from hw import button
 from hw.relay_controller import controller as relays
-from sensors.flow_meter import FlowMeter
-from tasks import control_task, display_task
+from sensors.flow_meter import flow_meter # Importamos la instancia global
 
+# --- Tareas ---
+from tasks import control_task, display_task
+import web_server # Importamos el nuevo módulo del servidor
+
+# --- Constantes ---
 _START_TIME_FILE = "start_time.txt"
 _WDT_TIMEOUT_MS = 300000
 
+# --- Inicialización del Watchdog ---
 try:
     wdt = WDT(timeout=_WDT_TIMEOUT_MS)
     info(f"Watchdog activado. Timeout: {_WDT_TIMEOUT_MS / 1000}s")
@@ -22,7 +27,7 @@ except Exception as e:
     wdt = None
     error(f"No se pudo iniciar el watchdog: {e}")
 
-
+# --- Manejo del Tiempo de Arranque ---
 start_timestamp = 0
 try:
     with open(_START_TIME_FILE, "r") as f:
@@ -34,8 +39,11 @@ except OSError:
         with open(_START_TIME_FILE, "w") as f: f.write(str(start_timestamp))
     except Exception as e:
         error(f"No se pudo crear el archivo de inicio: {e}")
+
 display_task.set_start_time(start_timestamp)
 
+
+# --- Función Principal Asíncrona ---
 async def main():
     """Función principal que lanza tareas y supervisa el sistema."""
     CURRENT_MODE = system_state.get_mode()
@@ -44,23 +52,29 @@ async def main():
         info("!!! MODO EMERGENCIA ACTIVADO !!!")
         info("Ejecutando alternancia de aireadores cada 3 horas.")
         uasyncio.create_task(control_task._compressor_loop())
-
     elif CURRENT_MODE != 'PROGRAM':
         info("Iniciando tareas de operación normal/demo...")
-        flow_meter = FlowMeter()
+        
+        # Tareas de control y hardware
         control_task.start()
         display_task.start()
         uasyncio.create_task(button.button.run())
-        uasyncio.create_task(flow_meter.task())
+        uasyncio.create_task(flow_meter.task()) # La instancia ya está creada
+
+        # NUEVA TAREA: Iniciar el servidor web
+        uasyncio.create_task(web_server.start_server())
+        
         info("Todas las tareas han sido lanzadas.")
 
+    # Bucle principal de alimentación del watchdog
     while True:
         if wdt:
             wdt.feed()
         await uasyncio.sleep(60)
 
-CURRENT_MODE = system_state.get_mode()
 
+# --- Punto de Entrada ---
+CURRENT_MODE = system_state.get_mode()
 if CURRENT_MODE == 'PROGRAM':
     info("Modo PROGRAM activo. No se inician tareas. REPL disponible.")
 else:
@@ -70,3 +84,6 @@ else:
         info("Sistema detenido por el usuario.")
     finally:
         info("Finalizando ejecución.")
+
+
+
