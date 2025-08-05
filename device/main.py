@@ -52,7 +52,7 @@ async def start_web_server_with_delay():
 
 # --- Función Principal Asíncrona ---
 async def main():
-    """Función principal que lanza tareas y supervisa el sistema."""
+
     CURRENT_MODE = system_state.get_mode()
 
     if CURRENT_MODE == 'EMERGENCY':

@@ -16,16 +16,11 @@ Response.default_content_type = 'application/json'
 
 @app.route('/')
 async def serve_index(request):
-    """Sirve la página principal del dashboard."""
     info("Web Server: Sirviendo index.html")
     return send_file("www/index.html")
 
 @app.route('/api/status')
 async def get_status(request):
-    """
-    Endpoint para obtener el estado actual del sistema.
-    Devuelve un JSON con el estado de la bomba y el flujo.
-    """
     status = {
         "pump_on": relays.pump_is_on(),
         "flow_lpm": flow_meter.get_lpm()
@@ -34,10 +29,6 @@ async def get_status(request):
 
 @app.route('/api/control', methods=['POST'])
 async def control_actuators(request):
-    """
-    Endpoint para controlar los actuadores.
-    Espera un JSON con una acción, ej: {"action": "toggle_pump"}
-    """
     try:
         data = request.json
         action = data.get("action")
@@ -56,7 +47,6 @@ async def control_actuators(request):
 # --- Función de Arranque ---
 
 async def start_server():
-    """Configura el modo Access Point e inicia el servidor web."""
     # --- Inicio limpio de WiFi ---
     # Desactivar ambas interfaces para evitar conflictos de estado
     info("Realizando un inicio limpio de las interfaces Wi-Fi...")

@@ -39,18 +39,16 @@ TEMPERATURE_REG = const(17) # 2 bytes
 
 
 def dectobcd(decimal):
-    """Convert decimal to binary coded decimal (BCD) format"""
+
     return (decimal // 10) << 4 | (decimal % 10)
 
 def bcdtodec(bcd):
-    """Convert binary coded decimal to decimal"""
+
     return ((bcd >> 4) * 10) + (bcd & 0x0F)
 
 
 class DS3231:
-    """ DS3231 RTC driver.
 
-    Hard coded to work with year 2000-2099."""
     FREQ_1      = const(1)
     FREQ_1024   = const(2)
     FREQ_4096   = const(3)
@@ -77,10 +75,7 @@ class DS3231:
         self._al2buf = bytearray(3)
 
     def datetime(self, datetime=None):
-        """Get or set datetime
 
-        Always sets or returns in 24h format, converts to 24h if clock is set to 12h format
-        datetime : tuple, (0-year, 1-month, 2-day, 3-hour, 4-minutes[, 5-seconds[, 6-weekday]])"""
         if datetime is None:
             self.i2c.readfrom_mem_into(self.addr, DATETIME_REG, self._timebuf)
             # 0x00 - Seconds    BCD
@@ -131,17 +126,7 @@ class DS3231:
         return True
 
     def square_wave(self, freq=None):
-        """Outputs Square Wave Signal
 
-        The alarm interrupts are disabled when enabling a square wave output. Disabling SWQ out does
-        not enable the alarm interrupts. Set them manually with the alarm_int() method.
-        freq : int,
-            Not given: returns current setting
-            False = disable SQW output,
-            1 =     1 Hz,
-            2 = 1.024 kHz,
-            3 = 4.096 kHz,
-            4 = 8.192 kHz"""
         if freq is None:
             return self.i2c.readfrom_mem(self.addr, CONTROL_REG, 1)[0]
 
@@ -157,12 +142,7 @@ class DS3231:
         return True
 
     def alarm1(self, time=None, match=AL1_MATCH_DHMS, int_en=True, weekday=False):
-        """Set alarm1, can match mday, wday, hour, minute, second
 
-        time    : tuple, (second,[ minute[, hour[, day]]])
-        weekday : bool, select mday (False) or wday (True)
-        match   : int, match const
-        int_en  : bool, enable interrupt on alarm match on SQW/INT pin (disables SQW output)"""
         if time is None:
             # TODO Return readable string
             self.i2c.readfrom_mem_into(self.addr, ALARM1_REG, self._al1_buf)
@@ -194,13 +174,7 @@ class DS3231:
         return self._al1_buf
 
     def alarm2(self, time=None, match=AL2_MATCH_DHM, int_en=True, weekday=False):
-        """Get/set alarm 2 (can match minute, hour, day)
 
-        time    : tuple, (minute[, hour[, day]])
-        weekday : bool, select mday (False) or wday (True)
-        match   : int, match const
-        int_en  : bool, enable interrupt on alarm match on SQW/INT pin (disables SQW output)
-        Returns : bytearray(3), the alarm settings register"""
         if time is None:
             # TODO Return readable string
             self.i2c.readfrom_mem_into(self.addr, ALARM2_REG, self._al2buf)
@@ -230,12 +204,7 @@ class DS3231:
         return self._al2buf
 
     def alarm_int(self, enable=True, alarm=0):
-        """Enable/disable interrupt for alarm1, alarm2 or both.
 
-        Enabling the interrupts disables the SQW output
-        enable : bool, enable/disable interrupts
-        alarm : int, alarm nr (0 to set both interrupts)
-        returns: the control register"""
         if alarm in (0, 1):
             self.i2c.readfrom_mem_into(self.addr, CONTROL_REG, self._buf)
             if enable:
@@ -253,7 +222,7 @@ class DS3231:
         return self.i2c.readfrom_mem(self.addr, CONTROL_REG, 1)
 
     def check_alarm(self, alarm):
-        """Check if the alarm flag is set and clear the alarm flag"""
+
         self.i2c.readfrom_mem_into(self.addr, STATUS_REG, self._buf)
         if (self._buf[0] & alarm) == 0:
             # Alarm flag not set
@@ -264,7 +233,7 @@ class DS3231:
         return True
 
     def output_32kHz(self, enable=True):
-        """Enable or disable the 32.768 kHz square wave output"""
+
         status = self.i2c.readfrom_mem(self.addr, STATUS_REG, 1)[0]
         if enable:
             self.i2c.writeto_mem(self.addr, STATUS_REG, bytearray([status | (1 << 3)]))
@@ -272,19 +241,14 @@ class DS3231:
             self.i2c.writeto_mem(self.addr, STATUS_REG, bytearray([status & (~(1 << 3))]))
 
     def OSF(self):
-        """Returns the oscillator stop flag (OSF).
 
-        1 indicates that the oscillator is stopped or was stopped for some
-        period in the past and may be used to judge the validity of
-        the time data.
-        returns : bool"""
         return bool(self.i2c.readfrom_mem(self.addr, STATUS_REG, 1)[0] >> 7)
 
     def _OSF_reset(self):
-        """Clear the oscillator stop flag (OSF)"""
+
         self.i2c.readfrom_mem_into(self.addr, STATUS_REG, self._buf)
         self.i2c.writeto_mem(self.addr, STATUS_REG, bytearray([self._buf[0] & 0x7f]))
 
     def _is_busy(self):
-        """Returns True when device is busy doing TCXO management"""
+
         return bool(self.i2c.readfrom_mem(self.addr, STATUS_REG, 1)[0] & (1 << 2))
