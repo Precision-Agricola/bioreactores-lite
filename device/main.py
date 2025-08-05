@@ -5,20 +5,21 @@ import uos
 from machine import WDT
 from utils.logger import info, error
 import system_state
+import gc  # <-- Importar el recolector de basura
 
 # --- Hardware & Sensores ---
 from hw import button
 from hw.relay_controller import controller as relays
-from sensors.flow_meter import flow_meter # Importamos la instancia global
+from sensors.flow_meter import flow_meter
 
 # --- Tareas ---
 from tasks import control_task, display_task
-import web_server # Importamos el nuevo módulo del servidor
+import web_server
 
 # --- Constantes ---
 _START_TIME_FILE = "start_time.txt"
 _WDT_TIMEOUT_MS = 300000
-_WEB_SERVER_START_DELAY_S = 10 # Nuevo: Retardo para iniciar el servidor
+# La constante _WEB_SERVER_START_DELAY_S ya no es necesaria y se ha eliminado.
 
 # --- Inicialización del Watchdog ---
 try:
@@ -43,21 +44,14 @@ except OSError:
 
 display_task.set_start_time(start_timestamp)
 
-# --- Tarea de arranque retardado para el servidor web ---
-async def start_web_server_with_delay():
-    """Espera un tiempo para que el sistema se estabilice antes de iniciar el Wi-Fi."""
-    info(f"El servidor web se iniciará en {_WEB_SERVER_START_DELAY_S} segundos...")
-    await uasyncio.sleep(_WEB_SERVER_START_DELAY_S)
-    await web_server.start_server()
+# La función `start_web_server_with_delay` se ha eliminado.
 
 # --- Función Principal Asíncrona ---
 async def main():
-
     CURRENT_MODE = system_state.get_mode()
 
     if CURRENT_MODE == 'EMERGENCY':
         info("!!! MODO EMERGENCIA ACTIVADO !!!")
-        info("Ejecutando alternancia de aireadores cada 3 horas.")
         uasyncio.create_task(control_task._compressor_loop())
     elif CURRENT_MODE != 'PROGRAM':
         info("Iniciando tareas de operación normal/demo...")
@@ -68,8 +62,13 @@ async def main():
         uasyncio.create_task(button.button.run())
         uasyncio.create_task(flow_meter.task())
 
-        # NUEVO: Iniciar el servidor web con retardo
-        uasyncio.create_task(start_web_server_with_delay())
+        # --- Lógica de arranque del servidor web optimizada ---
+        info("Limpiando memoria antes de iniciar tareas de red...")
+        gc.collect()
+        info(f"Memoria libre: {gc.mem_free()} bytes")
+        
+        # Iniciar el servidor web inmediatamente
+        uasyncio.create_task(web_server.start_server())
         
         info("Todas las tareas principales han sido lanzadas.")
 
@@ -78,7 +77,6 @@ async def main():
         if wdt:
             wdt.feed()
         await uasyncio.sleep(60)
-
 
 # --- Punto de Entrada ---
 CURRENT_MODE = system_state.get_mode()

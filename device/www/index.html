@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Bio-Reactor Control</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-color: #1e1e1e;
+            --text-color: #e0e0e0;
+            /* Colores de Marca: Precisión Agrícola */
+            --primary-color: #8ec742;
+            --secondary-color: #459a47;
+            --accent-color: #008745;
+            --off-color: #f44336;
+            --border-color: #333;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        main {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 10px;
+            /* El color del texto del header controlará el color del SVG */
+            color: var(--primary-color);
+        }
+
+        /* Estilos para el SVG integrado */
+        header svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 10px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+        }
+
+        header p {
+            margin: 0;
+            color: #aaa;
+            font-size: 1.1em;
+        }
+
+        .card {
+            background-color: var(--card-color);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.1em;
+            color: #ccc;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .status-item {
+            text-align: center;
+        }
+
+        .status-text {
+            font-size: 1.5em;
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        .status-value {
+            font-size: 1.2em;
+            font-weight: 400;
+        }
+
+        .status-on { color: var(--primary-color); }
+        .status-off { color: var(--off-color); }
+
+        .control-panel, .aerator-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .info-text {
+            font-size: 0.9em;
+            line-height: 1.6;
+            color: #bbb;
+        }
+        
+        .info-text strong {
+            color: var(--secondary-color);
+        }
+
+        /* The switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px; width: 26px;
+            left: 4px; bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:focus + .slider { box-shadow: 0 0 1px var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(26px); }
+        .slider.round { border-radius: 34px; }
+        .slider.round:before { border-radius: 50%; }
+
+    </style>
+</head>
+<body>
+    <main>
+        <header>
+            <svg version="1.0" viewBox="0 0 288.000000 360.000000">
+                <g transform="translate(0.000000,360.000000) scale(0.100000,-0.100000)" fill="currentColor" stroke="none">
+                    <path d="M0 1805 l0 -1795 1440 0 1440 0 0 1795 0 1795 -1440 0 -1440 0 0 -1795z m1828 1623 c17 -17 17 -262 -1 -276 -7 -6 -46 -12 -87 -14 l-75 -3 0 -200 0 -200 83 -3 82 -3 0 150 c0 123 3 152 16 165 12 12 38 16 116 16 142 0 138 5 138 -182 l0 -148 50 0 50 0 0 83 c0 51 5 88 12 95 8 8 49 12 119 12 136 0 139 -3 139 -109 l0 -78 41 -7 c93 -15 150 -73 157 -162 3 -31 -1 -67 -8 -84 -14 -34 -83 -100 -105 -100 -13 0 -15 -133 -15 -1131 0 -760 -3 -1137 -10 -1150 -10 -17 -22 -19 -125 -19 -103 0 -115 2 -125 19 -6 12 -10 92 -10 191 0 94 -3 170 -7 168 -89 -46 -33 -43 -828 -43 -795 0 -739 -3 -827 43 -5 2 -8 -74 -8 -168 0 -99 -4 -179 -10 -191 -10 -17 -22 -19 -125 -19 -103 0 -115 2 -125 19 -7 13 -10 390 -10 1148 l0 1128 -32 15 c-87 41 -124 162 -76 244 31 52 65 76 130 90 l53 12 5 80 5 79 120 3 c143 3 145 2 145 -100 l0 -68 45 0 45 0 0 73 c0 43 5 78 12 85 17 17 229 17 246 0 7 -7 12 -42 12 -85 l0 -73 85 0 85 0 0 205 0 205 -78 0 c-47 0 -83 5 -90 12 -8 8 -12 54 -12 140 0 110 2 128 18 137 26 16 764 15 780 -1z"/>
+                    <path d="M1122 3288 l3 -53 313 -3 312 -2 0 55 0 55 -316 0 -315 0 3 -52z"/>
+                    <path d="M1300 2935 l0 -205 135 0 135 0 0 205 0 205 -135 0 -135 0 0 -205z"/>
+                    <path d="M1920 2845 l0 -115 45 0 45 0 0 115 0 115 -45 0 -45 0 0 -115z"/>
+                    <path d="M322 2607 c-22 -23 -29 -68 -16 -102 18 -46 -5 -45 1131 -45 834 0 1073 3 1093 13 54 27 63 94 20 137 -20 20 -38 20 -1113 20 l-1094 0 -21 -23z"/>
+                    <path d="M430 1375 l0 -995 35 0 35 0 0 995 0 995 -35 0 -35 0 0 -995z"/>
+                    <path d="M600 2216 l0 -155 53 18 c94 33 188 44 309 38 126 -6 183 -21 445 -112 90 -31 198 -63 240 -70 164 -30 345 -13 523 49 l95 32 3 177 2 177 -835 0 -835 0 0 -154z"/>
+                    <path d="M2370 1375 l0 -995 35 0 35 0 0 995 0 995 -35 0 -35 0 0 -995z"/>
+                    <path d="M780 2015 c-36 -7 -90 -22 -120 -33 l-55 -19 -3 -506 -2 -507 835 0 835 0 0 483 0 483 -102 -34 c-142 -46 -278 -65 -405 -58 -124 8 -241 36 -432 106 -80 29 -176 61 -215 72 -94 25 -252 32 -336 13z m261 -158 c19 -12 45 -44 58 -70 22 -44 23 -52 11 -90 -29 -100 -131 -146 -220 -99 -38 20 -80 89 -80 132 0 43 42 112 80 132 48 25 109 23 151 -5z m1009 -207 c19 -19 24 -37 21 -70 -3 -22 -49 -60 -72 -60 -29 0 -69 44 -69 76 0 62 78 96 120 54z m-517 -174 c39 -17 92 -71 106 -109 14 -36 14 -108 0 -144 -15 -40 -57 -82 -104 -104 -184 -85 -359 146 -228 302 52 61 154 86 226 55z m-653 -116 c45 -45 11 -120 -53 -120 -61 0 -94 66 -57 113 27 34 80 37 110 7z m1180 -182 c26 -28 26 -58 -1 -92 -27 -34 -71 -35 -104 -1 -30 30 -31 54 -4 89 27 34 79 36 109 4z"/>
+                    <path d="M1424 1390 c-33 -13 -64 -59 -64 -96 0 -39 38 -89 75 -98 53 -13 125 44 125 99 0 32 -32 77 -65 91 -39 16 -42 16 -71 4z"/>
+                    <path d="M600 805 l0 -55 835 0 835 0 0 55 0 55 -835 0 -835 0 0 -55z"/>
+                    <path d="M600 638 c1 -28 47 -92 80 -109 33 -18 73 -19 756 -19 l721 0 34 23 c35 24 79 81 79 103 0 12 -140 14 -835 14 -661 0 -835 -3 -835 -12z"/>
+                </g>
+            </svg>
+            <h1>Bio-Reactor</h1>
+            <p>Precisión Agrícola</p>
+        </header>
+
+        <section class="status-grid">
+            <div class="card status-item">
+                <h2>Bomba</h2>
+                <p id="pump-status" class="status-text status-off">APAGADA</p>
+            </div>
+            <div class="card status-item">
+                <h2>Flujo</h2>
+                <p class="status-text"><span id="flow-lpm">0.00</span> <span class="status-value">L/min</span></p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Estado del Proceso</h2>
+            <div class="status-grid">
+                <div class="status-item">
+                    <h3>Inoculación</h3>
+                    <!-- Placeholder para los días de inoculación -->
+                    <p class="status-text"><span id="inoculation-days">--</span> <span class="status-value">días</span></p>
+                </div>
+                <div class="status-item">
+                    <h3>Aireadores</h3>
+                    <div class="aerator-status">
+                        <span>1:</span> <span class="status-text status-on">ON</span>
+                    </div>
+                    <div class="aerator-status">
+                        <span>2:</span> <span class="status-text status-on">ON</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Control Manual</h2>
+            <div class="control-panel">
+                <span>Bomba Principal</span>
+                <label class="switch">
+                    <input type="checkbox" id="pump-toggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Consorcio</h2>
+            <p class="info-text">
+                Este bio-reactor utiliza un consorcio de microorganismos especializados, incluyendo <strong>micorrizas</strong>, para mejorar la solubilización de nutrientes y la salud del suelo.
+            </p>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const pumpStatusEl = document.getElementById('pump-status');
+            const flowLpmEl = document.getElementById('flow-lpm');
+            const pumpToggleEl = document.getElementById('pump-toggle');
+            // Placeholder para el contador de días
+            const inoculationDaysEl = document.getElementById('inoculation-days');
+
+            // --- Lógica para calcular días de inoculación (a implementar) ---
+            // const inoculationStartDate = new Date('2025-08-01T00:00:00'); 
+            // const today = new Date();
+            // const diffTime = Math.abs(today - inoculationStartDate);
+            // const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            // inoculationDaysEl.textContent = diffDays;
+            // ----------------------------------------------------------------
+
+            const updateStatus = async () => {
+                try {
+                    const response = await fetch('/api/status');
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    const data = await response.json();
+
+                    // Actualizar estado de la bomba
+                    pumpToggleEl.checked = data.pump_on;
+                    pumpStatusEl.textContent = data.pump_on ? 'ENCENDIDA' : 'APAGADA';
+                    pumpStatusEl.className = 'status-text';
+                    pumpStatusEl.classList.add(data.pump_on ? 'status-on' : 'status-off');
+
+                    // Actualizar flujo
+                    flowLpmEl.textContent = data.flow_lpm.toFixed(2);
+
+                } catch (error) {
+                    console.error('Error al actualizar estado:', error);
+                    pumpStatusEl.textContent = 'ERROR';
+                    pumpStatusEl.className = 'status-text status-off';
+                }
+            };
+
+            const togglePump = async () => {
+                try {
+                    const response = await fetch('/api/control', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'toggle_pump' })
+                    });
+                    if (!response.ok) throw new Error('Control command failed');
+                    
+                    const data = await response.json();
+                    pumpToggleEl.checked = data.pump_on;
+                    pumpStatusEl.textContent = data.pump_on ? 'ENCENDIDA' : 'APAGADA';
+                    pumpStatusEl.className = 'status-text';
+                    pumpStatusEl.classList.add(data.pump_on ? 'status-on' : 'status-off');
+
+                } catch (error) {
+                    console.error('Error al controlar la bomba:', error);
+                }
+            };
+
+            pumpToggleEl.addEventListener('change', togglePump);
+
+            updateStatus();
+            setInterval(updateStatus, 3000);
+        });
+    </script>
+</body>
+</html>

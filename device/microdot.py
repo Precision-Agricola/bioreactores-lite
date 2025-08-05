@@ -1,14 +1,3 @@
-<<<<<<< HEAD
-"""
-microdot
---------
-
-The ``microdot`` module defines a few classes that help implement HTTP-based
-servers for MicroPython and standard Python.
-"""
-=======
-
->>>>>>> task/BL-23-como-desarrollador-quiero-eliminar-todos-los-docstrings-para-optimizar-la-memoria-del-esp32-posible-solucin-al-problema-de-driver-de-wifif
 import asyncio
 import io
 import re
