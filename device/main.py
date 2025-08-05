@@ -18,6 +18,7 @@ import web_server # Importamos el nuevo módulo del servidor
 # --- Constantes ---
 _START_TIME_FILE = "start_time.txt"
 _WDT_TIMEOUT_MS = 300000
+_WEB_SERVER_START_DELAY_S = 10 # Nuevo: Retardo para iniciar el servidor
 
 # --- Inicialización del Watchdog ---
 try:
@@ -42,6 +43,12 @@ except OSError:
 
 display_task.set_start_time(start_timestamp)
 
+# --- Tarea de arranque retardado para el servidor web ---
+async def start_web_server_with_delay():
+    """Espera un tiempo para que el sistema se estabilice antes de iniciar el Wi-Fi."""
+    info(f"El servidor web se iniciará en {_WEB_SERVER_START_DELAY_S} segundos...")
+    await uasyncio.sleep(_WEB_SERVER_START_DELAY_S)
+    await web_server.start_server()
 
 # --- Función Principal Asíncrona ---
 async def main():
@@ -59,12 +66,12 @@ async def main():
         control_task.start()
         display_task.start()
         uasyncio.create_task(button.button.run())
-        uasyncio.create_task(flow_meter.task()) # La instancia ya está creada
+        uasyncio.create_task(flow_meter.task())
 
-        # NUEVA TAREA: Iniciar el servidor web
-        uasyncio.create_task(web_server.start_server())
+        # NUEVO: Iniciar el servidor web con retardo
+        uasyncio.create_task(start_web_server_with_delay())
         
-        info("Todas las tareas han sido lanzadas.")
+        info("Todas las tareas principales han sido lanzadas.")
 
     # Bucle principal de alimentación del watchdog
     while True:
@@ -84,6 +91,3 @@ else:
         info("Sistema detenido por el usuario.")
     finally:
         info("Finalizando ejecución.")
-
-
-
