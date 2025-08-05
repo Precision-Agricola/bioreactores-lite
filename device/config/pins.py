@@ -1,4 +1,4 @@
-# config/pins
+# device/config/pins
 
 from machine import Pin, SoftI2C
 

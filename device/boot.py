@@ -1,4 +1,4 @@
-# boot.py
+# device/boot.py
 
 import gc
 import machine
@@ -11,9 +11,9 @@ print("\n" + "="*40)
 print("  BIOREACTOR IOT - INICIANDO SISTEMA")
 print("="*40)
 
+# --- Lógica de selección de modo ---
 sw1_pin = machine.Pin(MODE_SW1_PIN, machine.Pin.IN, machine.Pin.PULL_DOWN)
 sw2_pin = machine.Pin(MODE_SW2_PIN, machine.Pin.IN, machine.Pin.PULL_DOWN)
-
 sw1, sw2 = sw1_pin.value(), sw2_pin.value()
 
 if sw1 and sw2:

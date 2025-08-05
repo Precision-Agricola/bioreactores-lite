@@ -1,4 +1,4 @@
-# hw/relay_controller
+# device/hw/relay_controller
 
 from utils.logger import info
 from hw.relays import (

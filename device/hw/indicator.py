@@ -1,3 +1,5 @@
+# device/hw/indicator.py
+
 import uasyncio as asyncio
 from machine import Pin
 from config.pins import INDICATOR_PIN

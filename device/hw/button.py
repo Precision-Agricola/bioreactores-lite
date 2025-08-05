@@ -1,4 +1,4 @@
-# hw/button.py
+# device/hw/button.py
 
 import uasyncio as asyncio
 from machine import Pin

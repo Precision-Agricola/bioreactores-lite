@@ -1,4 +1,4 @@
-# tasks/display_task.py
+# device/tasks/display_task.py
 
 import uasyncio as asyncio
 from time import time
