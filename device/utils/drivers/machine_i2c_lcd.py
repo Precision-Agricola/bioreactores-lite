@@ -1,6 +1,3 @@
-"""Implements a HD44780 character LCD connected via PCF8574 on I2C.
-   This was tested with: https://www.wemos.cc/product/d1-mini.html"""
-
 from utils.drivers.lcd_api import LcdApi
 from time import sleep_ms
 
@@ -17,7 +14,7 @@ SHIFT_DATA = 4
 
 
 class I2cLcd(LcdApi):
-    """Implements a HD44780 character LCD connected via PCF8574 on I2C."""
+
 
     def __init__(self, i2c, i2c_addr, num_lines, num_columns):
         self.i2c = i2c
@@ -41,27 +38,21 @@ class I2cLcd(LcdApi):
         self.hal_write_command(cmd)
 
     def hal_write_init_nibble(self, nibble):
-        """Writes an initialization nibble to the LCD.
 
-        This particular function is only used during initialization.
-        """
         byte = ((nibble >> 4) & 0x0f) << SHIFT_DATA
         self.i2c.writeto(self.i2c_addr, bytearray([byte | MASK_E]))
         self.i2c.writeto(self.i2c_addr, bytearray([byte]))
 
     def hal_backlight_on(self):
-        """Allows the hal layer to turn the backlight on."""
+
         self.i2c.writeto(self.i2c_addr, bytearray([1 << SHIFT_BACKLIGHT]))
 
     def hal_backlight_off(self):
-        """Allows the hal layer to turn the backlight off."""
+
         self.i2c.writeto(self.i2c_addr, bytearray([0]))
 
     def hal_write_command(self, cmd):
-        """Writes a command to the LCD.
 
-        Data is latched on the falling edge of E.
-        """
         byte = ((self.backlight << SHIFT_BACKLIGHT) | (((cmd >> 4) & 0x0f) << SHIFT_DATA))
         self.i2c.writeto(self.i2c_addr, bytearray([byte | MASK_E]))
         self.i2c.writeto(self.i2c_addr, bytearray([byte]))
@@ -73,7 +64,7 @@ class I2cLcd(LcdApi):
             sleep_ms(5)
 
     def hal_write_data(self, data):
-        """Write data to the LCD."""
+
         byte = (MASK_RS | (self.backlight << SHIFT_BACKLIGHT) | (((data >> 4) & 0x0f) << SHIFT_DATA))
         self.i2c.writeto(self.i2c_addr, bytearray([byte | MASK_E]))
         self.i2c.writeto(self.i2c_addr, bytearray([byte]))

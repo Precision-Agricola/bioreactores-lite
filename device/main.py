@@ -37,7 +37,7 @@ except OSError:
 display_task.set_start_time(start_timestamp)
 
 async def main():
-    """Función principal que lanza tareas y supervisa el sistema."""
+
     CURRENT_MODE = system_state.get_mode()
 
     if CURRENT_MODE == 'EMERGENCY':
