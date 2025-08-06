@@ -16,14 +16,16 @@ sw1_pin = machine.Pin(MODE_SW1_PIN, machine.Pin.IN, machine.Pin.PULL_DOWN)
 sw2_pin = machine.Pin(MODE_SW2_PIN, machine.Pin.IN, machine.Pin.PULL_DOWN)
 sw1, sw2 = sw1_pin.value(), sw2_pin.value()
 
-if sw1 and sw2:
-    system_state.set_mode('EMERGENCY')
-elif sw1:
-    system_state.set_mode('WORKING')
-elif sw2:
-    system_state.set_mode('DEMO')
-else:
-    system_state.set_mode('PROGRAM')
+system_state.set_mode('WORKING')
+
+# if sw1 and sw2:
+#     system_state.set_mode('EMERGENCY')
+# elif sw1:
+#     system_state.set_mode('WORKING')
+# elif sw2:
+#     system_state.set_mode('DEMO')
+# else:
+#     system_state.set_mode('PROGRAM')
 
 try:
     ds = DS3231(i2c())
