@@ -301,10 +301,10 @@
                 <div class="status-item">
                     <h3>Aireadores</h3>
                     <div class="aerator-status">
-                        <span>1:</span> <span class="status-text status-on">ON</span>
+                        <span>1:</span> <span id="aerator1-status" class="status-text">ON</span>
                     </div>
                     <div class="aerator-status">
-                        <span>2:</span> <span class="status-text status-on">ON</span>
+                        <span>2:</span> <span id="aerator2-status" class="status-text">ON</span>
                     </div>
                 </div>
             </div>
@@ -339,6 +339,8 @@
             const pumpToggleEl = document.getElementById('pump-toggle');
             const inoculationDaysEl = document.getElementById('inoculation-days');
             const resetInoculationBtn = document.getElementById('reset-inoculation');
+            const aerator1StatusEl = document.getElementById('aerator1-status');
+            const aerator2StatusEl = document.getElementById('aerator2-status');
 
             const updateStatus = async () => {
                 try {
@@ -348,17 +350,23 @@
 
                     pumpToggleEl.checked = data.pump_on;
                     pumpStatusEl.textContent = data.pump_on ? 'ENCENDIDA' : 'APAGADA';
-                    pumpStatusEl.className = 'status-text';
-                    pumpStatusEl.classList.add(data.pump_on ? 'status-on' : 'status-off');
+                    pumpStatusEl.className = 'status-text ' + (data.pump_on ? 'status-on' : 'status-off');
 
                     flowLpmEl.textContent = data.flow_lpm.toFixed(2);
-                    
                     inoculationDaysEl.textContent = data.inoculation_days;
+
+                    aerator1StatusEl.textContent = data.aerator1_on ? 'ON' : 'OFF';
+                    aerator1StatusEl.className = 'status-text ' + (data.aerator1_on ? 'status-on' : 'status-off');
+                    
+                    aerator2StatusEl.textContent = data.aerator2_on ? 'ON' : 'OFF';
+                    aerator2StatusEl.className = 'status-text ' + (data.aerator2_on ? 'status-on' : 'status-off');
 
                 } catch (error) {
                     console.error('Error al actualizar estado:', error);
                     pumpStatusEl.textContent = 'ERROR';
                     pumpStatusEl.className = 'status-text status-off';
+                    aerator1StatusEl.textContent = 'ERR';
+                    aerator2StatusEl.textContent = 'ERR';
                 }
             };
 
@@ -371,11 +379,7 @@
                     });
                     if (!response.ok) throw new Error('Control command failed');
                     
-                    const data = await response.json();
-                    pumpToggleEl.checked = data.pump_on;
-                    pumpStatusEl.textContent = data.pump_on ? 'ENCENDIDA' : 'APAGADA';
-                    pumpStatusEl.className = 'status-text';
-                    pumpStatusEl.classList.add(data.pump_on ? 'status-on' : 'status-off');
+                    await updateStatus();
 
                 } catch (error) {
                     console.error('Error al controlar la bomba:', error);
@@ -394,8 +398,7 @@
                     });
                     if (!response.ok) throw new Error('Reset command failed');
                     
-                    // Actualizar inmediatamente la UI
-                    updateStatus();
+                    await updateStatus();
 
                 } catch (error) {
                     console.error('Error al reiniciar el conteo:', error);
