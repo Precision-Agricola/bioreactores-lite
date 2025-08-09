@@ -1,5 +1,4 @@
 # .github/workflows/release.yml
-
 name: Create Release and Package Device Folder
 
 on:
@@ -10,7 +9,6 @@ on:
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
-    
     permissions:
       contents: write
 
@@ -18,8 +16,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Generate version module
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p device/config
+          SHORT_SHA="${GITHUB_SHA::7}"
+          BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          VERSION_TAG="${{ github.ref_name }}"
+          {
+            echo '# Auto-generated at release time'
+            echo "VERSION = \"${VERSION_TAG}\""
+            echo "COMMIT = \"${SHORT_SHA}\""
+            echo "BUILD_DATE = \"${BUILD_DATE}\""
+          } > device/config/system_version.py
+          echo "Generated device/config/system_version.py:"
+          cat device/config/system_version.py
+          echo "Tree before zipping:"
+          ls -R device
+
       - name: Zip device folder
-        run: zip -r device-${{ github.ref_name }}.zip device
+        run: zip -r "device-${{ github.ref_name }}.zip" device
 
       - name: Create Release
         id: create_release
@@ -39,7 +56,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} 
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./device-${{ github.ref_name }}.zip
           asset_name: device-${{ github.ref_name }}.zip
           asset_content_type: application/zip

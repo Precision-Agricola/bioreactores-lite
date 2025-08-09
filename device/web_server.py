@@ -10,6 +10,11 @@ from hw.relay_controller import controller as relays
 from sensors.flow_meter import flow_meter
 from tasks import display_task
 
+try:
+    from config.system_version import VERSION, COMMIT, BUILD_DATE
+except Exception:
+    VERSION, COMMIT, BUILD_DATE = "dev", "local", "n/a"
+
 WIFI_SSID = "Bio-Reactor-WiFi"
 WIFI_PASSWORD = "password123"
 MAX_WIFI_RETRIES = 3
@@ -19,6 +24,16 @@ app = Microdot()
 Response.default_content_type = 'application/json'
 
 inoculation_start_time = 0
+
+
+@app.get('/health')
+def health(req):
+    return {
+        "status": "ok",
+        "version": VERSION,
+        "commit": COMMIT,
+        "build_date": BUILD_DATE
+    }
 
 def set_inoculation_start_time(timestamp):
     """Permite a main.py establecer la fecha de inicio."""
