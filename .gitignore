@@ -3,6 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# Versioninig
+device/config/system_version.py
+
 # C extensions
 *.so
 
