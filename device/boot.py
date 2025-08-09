@@ -7,6 +7,11 @@ from config.pins import i2c, MODE_SW1_PIN, MODE_SW2_PIN
 from utils.drivers.ds3231 import DS3231
 import system_state
 
+try:
+    from config.system_version import VERSION, COMMIT, BUILD_DATE
+except Exception:
+    VERSION, COMMIT, BUILD_DATE = "dev", "local", "n/a"
+
 print("\n" + "="*40)
 print("  BIOREACTOR IOT - INICIANDO SISTEMA")
 print("="*40)
@@ -34,7 +39,9 @@ except Exception as e:
     print(f"ERROR: No se pudo inicializar el RTC. Detalle: {e}")
 
 gc.collect()
-print("-" * 40)
-print(f"boot.py finalizado. Memoria libre: {gc.mem_free()} bytes.")
-print("Cargando main.py...")
+
+print("\n" + "="*40)
+print("  BIOREACTOR INTELIGENTE PRECISIÓN AGRÍCOLA - INICIANDO SISTEMA")
+print(f"  Version: {VERSION} ({COMMIT})")
+print(f"  Build:   {BUILD_DATE} UTC")
 print("="*40)
