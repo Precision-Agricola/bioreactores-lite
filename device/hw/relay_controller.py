@@ -15,8 +15,11 @@ class RelayController:
         self._comp_b = compressor_b
         self._pump   = pump_relay
         self._light  = indicator_rl
-        self.set_compressors(a_on=True)
+        self._comp_a.off()
+        self._comp_b.off()
+        self._pump.off()
         self._light.off()
+        self.set_compressors(a_on=True)
         info("RelayController ready")
 
     def set_compressors(self, *, a_on: bool):
