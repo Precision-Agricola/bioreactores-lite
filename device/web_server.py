@@ -36,26 +36,22 @@ def health(req):
     }
 
 def set_inoculation_start_time(timestamp):
-    """Permite a main.py establecer la fecha de inicio."""
     global inoculation_start_time
     inoculation_start_time = timestamp
     info(f"Fecha de inicio de inoculación establecida en el servidor web: {inoculation_start_time}")
 
 @app.route('/')
 async def serve_index(request):
-    """Sirve la página principal del dashboard."""
     info("Web Server: Sirviendo www/index.html")
     return send_file("www/index.html")
     
 @app.route('/pa_dark_logo_with_letters.svg')
 async def serve_logo(request):
-    """Sirve el archivo del logo."""
     info("Web Server: Sirviendo logo SVG")
     return send_file("www/pa_dark_logo_with_letters.svg")
 
 @app.route('/api/status')
 async def get_status(request):
-    """Endpoint para obtener el estado actual del sistema."""
     
     days_since_inoculation = 0
     if inoculation_start_time > 0:
@@ -72,13 +68,13 @@ async def get_status(request):
         "flow_lpm": flow_meter.get_lpm(),
         "inoculation_days": days_since_inoculation,
         "aerator1_on": aerator1_status,
-        "aerator2_on": aerator2_status
+        "aerator2_on": aerator2_status,
+        "version": VERSION 
     }
     return status
 
 @app.route('/api/control', methods=['POST'])
 async def control_actuators(request):
-    """Endpoint para controlar los actuadores."""
     try:
         data = request.json
         action = data.get("action")

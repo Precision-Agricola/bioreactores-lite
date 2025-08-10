@@ -9,7 +9,6 @@
             --bg-color: #121212;
             --card-color: #1e1e1e;
             --text-color: #e0e0e0;
-            /* Colores de Marca: Precisión Agrícola */
             --primary-color: #8ec742;
             --secondary-color: #459a47;
             --accent-color: #008745;
@@ -24,9 +23,11 @@
             margin: 0;
             padding: 20px;
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
             min-height: 100vh;
+            box-sizing: border-box;
         }
 
         main {
@@ -194,6 +195,15 @@
             background-color: white;
             transition: .4s;
         }
+
+        footer {
+            text-align: center;
+            font-size: 0.8em;
+            color: #888;
+            width: 100%;
+            max-width: 400px;
+        }
+
         input:checked + .slider { background-color: var(--primary-color); }
         input:focus + .slider { box-shadow: 0 0 1px var(--primary-color); }
         input:checked + .slider:before { transform: translateX(26px); }
@@ -332,6 +342,10 @@
         </section>
     </main>
 
+    <footer>
+        <p id="version-info"></p>
+    </footer>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const pumpStatusEl = document.getElementById('pump-status');
@@ -341,6 +355,7 @@
             const resetInoculationBtn = document.getElementById('reset-inoculation');
             const aerator1StatusEl = document.getElementById('aerator1-status');
             const aerator2StatusEl = document.getElementById('aerator2-status');
+            const versionInfoEl = document.getElementById('version-info');
 
             const updateStatus = async () => {
                 try {
@@ -360,6 +375,10 @@
                     
                     aerator2StatusEl.textContent = data.aerator2_on ? 'ON' : 'OFF';
                     aerator2StatusEl.className = 'status-text ' + (data.aerator2_on ? 'status-on' : 'status-off');
+                    
+                    if (data.version) {
+                        versionInfoEl.textContent = `Firmware: ${data.version}`;
+                    }
 
                 } catch (error) {
                     console.error('Error al actualizar estado:', error);
@@ -367,6 +386,7 @@
                     pumpStatusEl.className = 'status-text status-off';
                     aerator1StatusEl.textContent = 'ERR';
                     aerator2StatusEl.textContent = 'ERR';
+                    versionInfoEl.textContent = 'Firmware: --';
                 }
             };
 
