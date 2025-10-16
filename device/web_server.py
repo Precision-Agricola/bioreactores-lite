@@ -7,7 +7,6 @@ import gc
 from microdot import Microdot, Response, send_file
 from utils.logger import info, error
 from hw.relay_controller import controller as relays
-from sensors.flow_meter import flow_meter
 from tasks import display_task
 
 try:
@@ -65,7 +64,7 @@ async def get_status(request):
 
     status = {
         "pump_on": relays.pump_is_on(),
-        "flow_lpm": flow_meter.get_lpm(),
+        "flow_lpm": 0,
         "inoculation_days": days_since_inoculation,
         "aerator1_on": aerator1_status,
         "aerator2_on": aerator2_status,

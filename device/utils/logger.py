@@ -2,7 +2,6 @@
 
 import os
 import time
-from hw.indicator import set_level as set_indicator_level
 
 _LOG_FILE = "event.log"
 _MAX_SIZE_BYTES = 200 * 1024
@@ -53,12 +52,9 @@ def log(level: str, msg: str) -> None:
 
     record = f"[{_timestamp()}][{lvl_name}] {msg}\n"
     print(record, end='')
-    
+
     _rotate_log()
     _write(record)
-
-    if lvl_name in ("INFO", "WARNING", "ERROR"):
-        set_indicator_level(lvl_name)
 
 def debug(msg: str)   -> None: log("DEBUG",   msg)
 def info(msg: str)    -> None: log("INFO",    msg)

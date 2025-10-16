@@ -13,7 +13,6 @@ if CURRENT_MODE == 'PROGRAM':
 else:
     from machine import WDT
     from hw import button
-    from sensors.flow_meter import flow_meter
     from tasks import control_task, display_task
     import web_server
 
@@ -52,7 +51,6 @@ else:
             control_task.start()
             display_task.start()
             uasyncio.create_task(button.button.run())
-            uasyncio.create_task(flow_meter.task())
 
             info("Limpiando memoria antes de iniciar tareas de red...")
             gc.collect()
