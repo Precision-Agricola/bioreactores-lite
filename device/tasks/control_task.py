@@ -1,14 +1,16 @@
 # device/tasks/control_task.py
+# Control de bomba, compresores y lectura periódica de sensores analógicos
 
 import uasyncio as asyncio
 from config import runtime
 from hw.relay_controller import controller as relays
 from utils.logger import info
-from sensors.analog_readings import read_relatives as read_analog  # <— IMPORT CORRECTO
+from sensors.analog_readings import read_relatives as read_analog
 import system_state
 
 
 async def _auto_pump_loop():
+    """Control automático de bomba en base a intervalos configurados."""
     time_factor = system_state.get_time_factor()
 
     interval_seconds = (runtime.AUTO_PUMP_INTERVAL_MIN * 60) // time_factor
@@ -33,6 +35,7 @@ async def _auto_pump_loop():
 
 
 async def _compressor_loop():
+    """Alternancia automática entre Compresor A y B."""
     time_factor = system_state.get_time_factor()
     cycle_seconds = (runtime.COMPRESSOR_CYCLE_HOURS * 3600) // time_factor
 
@@ -60,15 +63,20 @@ async def _analog_loop():
     info(f"Sensor loop activo en modo: {mode}")
 
     while True:
-        vals = read_analog()  # {'pH': float, 'O2_mgL': float, 'NH3_pct': float, 'H2S_pct': float}
-        info(
-            "pH: {:.2f} | O2: {:.2f} mg/L | NH3: {:.1f}% | H2S: {:.1f}%"
-            .format(vals['pH'], vals['O2_mgL'], vals['NH3_pct'], vals['H2S_pct'])
-        )
-        await asyncio.sleep(30)  # cada 30 s
+        try:
+            vals = read_analog()  # {'pH': float, 'O2_pct': float, 'NH3_ppm': float, 'H2S_ppm': float}
+            info(
+                "pH: {:.2f} | O2: {:.1f}% | NH3: {:.1f} ppm | H2S: {:.1f} ppm"
+                .format(vals['pH'], vals['O2_pct'], vals['NH3_ppm'], vals['H2S_ppm'])
+            )
+        except Exception as e:
+            from utils.logger import error
+            error(f"_analog_loop error: {e}")
+        await asyncio.sleep(30)  # cada 30 segundos
 
 
 def start():
+    """Lanza todas las tareas principales de control."""
     info("Starting high-level control tasks...")
     asyncio.create_task(_auto_pump_loop())
     asyncio.create_task(_compressor_loop())
