@@ -1,8 +1,10 @@
+# device/tasks/control_task.py
+
 import uasyncio as asyncio
 from config import runtime
 from hw.relay_controller import controller as relays
 from utils.logger import info
-from sensors.analog_readings import read_analog_sensors as read_analog
+from sensors.analog_readings import read_relatives as read_analog  # <— IMPORT CORRECTO
 import system_state
 
 
@@ -47,8 +49,6 @@ async def _compressor_loop():
 
 
 async def _analog_loop():
-
-async def _analog_loop():
     """
     Lectura periódica de sensores analógicos (pH, O2, NH3, H2S)
     Solo activa en modo DEMO o WORK.
@@ -60,10 +60,12 @@ async def _analog_loop():
     info(f"Sensor loop activo en modo: {mode}")
 
     while True:
-        vals = read_analog()
-        info(f"pH: {vals['pH']:.2f} | O2: {vals['O2_mgL']:.2f} mg/L | NH3: {vals['NH3_pct']:.1f}% | H2S: {vals['H2S_pct']:.1f}%")
-        await asyncio.sleep(30)  # cada 30 segundos
-
+        vals = read_analog()  # {'pH': float, 'O2_mgL': float, 'NH3_pct': float, 'H2S_pct': float}
+        info(
+            "pH: {:.2f} | O2: {:.2f} mg/L | NH3: {:.1f}% | H2S: {:.1f}%"
+            .format(vals['pH'], vals['O2_mgL'], vals['NH3_pct'], vals['H2S_pct'])
+        )
+        await asyncio.sleep(30)  # cada 30 s
 
 
 def start():
