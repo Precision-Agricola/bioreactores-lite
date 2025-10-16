@@ -1,4 +1,4 @@
-# device/config/runtime
+# device/config/runtime.py
 
 AUTO_PUMP_INTERVAL_MIN = 180
 AUTO_PUMP_DURATION_MIN = 10
