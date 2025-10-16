@@ -13,7 +13,7 @@ if CURRENT_MODE == 'PROGRAM':
 else:
     from machine import WDT
     from hw import button
-    from tasks import control_task, display_task
+    from tasks import control_task, display_task, sensor_task
     import web_server
 
     _START_TIME_FILE = "start_time.txt"
@@ -50,6 +50,7 @@ else:
             
             control_task.start()
             display_task.start()
+            sensor_task.start()
             uasyncio.create_task(button.button.run())
 
             info("Limpiando memoria antes de iniciar tareas de red...")

@@ -1,4 +1,4 @@
-# tasks/sensor_task.py
+# device/tasks/sensor_task.py
 
 import uasyncio as asyncio
 from machine import ADC, Pin, UART
@@ -142,4 +142,3 @@ def start():
     """Inicia la tarea de lectura de sensores en segundo plano."""
     info("Lanzando tarea de control de sensores...")
     asyncio.create_task(_loop())
-

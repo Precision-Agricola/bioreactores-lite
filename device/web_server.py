@@ -7,7 +7,7 @@ import gc
 from microdot import Microdot, Response, send_file
 from utils.logger import info, error
 from hw.relay_controller import controller as relays
-from tasks import display_task
+from tasks import display_task, sensor_task
 
 try:
     from config.system_version import VERSION, COMMIT, BUILD_DATE
@@ -68,7 +68,8 @@ async def get_status(request):
         "inoculation_days": days_since_inoculation,
         "aerator1_on": aerator1_status,
         "aerator2_on": aerator2_status,
-        "version": VERSION 
+        "version": VERSION,
+        "sensors": sensor_task.current_readings
     }
     return status
 
