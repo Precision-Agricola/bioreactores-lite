@@ -1,4 +1,11 @@
 # device/tasks/sensor_task.py
+#
+# Lee sensores analógicos y RS485
+# + Calcula valores “ingenierizados” (reales) a partir de ADC:
+#   - pH (unid. pH)
+#   - O2 (mg/L)
+#   - NH3 (ppm)
+#   - H2S (ppm)
 
 import uasyncio as asyncio
 from machine import ADC, Pin, UART
@@ -8,14 +15,91 @@ from utils.logger import info, error
 from config import pins
 from config import sensor_params
 
+# =========================
+#  Calibraciones (EDITABLE)
+# =========================
+
+# ADC → Voltios
+ADC_MAX        = 4095            # Resolución ADC ESP32 (12 bits)
+ADC_VREF       = 3.30            # Vref efectiva (ajústala tras comparar con multímetro)
+ADC_ATTEN_GAIN = 1.00            # Ganancia corregida por atenuación/escala real (11dB ~ 1.0–1.1)
+
+def adc_to_volts(raw):
+    if raw is None:
+        return None
+    try:
+        return (float(raw) / ADC_MAX) * ADC_VREF * ADC_ATTEN_GAIN
+    except Exception:
+        return None
+
+# pH = m*V + b  (usa tu última calibración real)
+PH_SLOPE   = 3.9769
+PH_OFFSET  = -1.8758
+
+# DO mg/L (lineal por defecto: 0.20–3.00 V → 0–20 mg/L)
+DO_V_MIN      = 0.20
+DO_V_MAX      = 3.00
+DO_MG_L_MAX   = 20.0
+
+# NH3 ppm (lineal por defecto: 0.20–3.00 V → 0–100 ppm)
+NH3_V_MIN     = 0.20
+NH3_V_MAX     = 3.00
+NH3_PPM_MAX   = 100.0
+
+# H2S ppm (lineal por defecto: 0.20–3.00 V → 0–50 ppm)
+H2S_V_MIN     = 0.20
+H2S_V_MAX     = 3.00
+H2S_PPM_MAX   = 50.0
+
+def clamp(x, lo, hi):
+    try:
+        return max(lo, min(hi, x))
+    except Exception:
+        return None
+
+def map_linear(v, in_min, in_max, out_min, out_max):
+    """Mapeo lineal con saturación en extremos."""
+    try:
+        if v is None:
+            return None
+        if in_max <= in_min:
+            return None
+        if v <= in_min:
+            return out_min
+        if v >= in_max:
+            return out_max
+        ratio = (v - in_min) / (in_max - in_min)
+        return out_min + ratio * (out_max - out_min)
+    except Exception:
+        return None
+
+# =========================
+#  Estructura de lecturas
+# =========================
+
 current_readings = {
-    "analog": {
+    "analog": {          # crudo
         "p32": None, "p33": None, "p02": None, "p04": None,
     },
-    "rs485": {
+    "rs485": {           # reales (del sensor RS485)
         "level": None, "rs485_temperature": None, "ambient_temperature": None,
+    },
+    "eng": {             # INGENIERIZADO (reales calculados desde ADC)
+        "pH": None,          # unidades pH
+        "O2_mgL": None,      # mg/L
+        "NH3_ppm": None,     # ppm
+        "H2S_ppm": None,     # ppm
+        # Para depuración, también guardamos voltajes calculados:
+        "pH_V": None,
+        "O2_V": None,
+        "NH3_V": None,
+        "H2S_V": None,
     }
 }
+
+# =========================
+#   Clases de sensores
+# =========================
 
 class AnalogSensors:
     def __init__(self):
@@ -34,7 +118,7 @@ class AnalogSensors:
             error(f"No se pudieron inicializar los ADC: {e}")
             raise
 
-    def read(self):
+    def read_raw(self):
         try:
             return {
                 "p32": self.adc_p32.read(), "p33": self.adc_p33.read(),
@@ -43,6 +127,44 @@ class AnalogSensors:
         except Exception as e:
             error(f"Error al leer sensores analógicos: {e}")
             return None
+
+    def compute_engineered(self, raw):
+        """Convierte crudo → voltios → unidades reales, usando las constantes de calibración."""
+        try:
+            # Voltajes
+            v_ph  = adc_to_volts(raw.get("p32") if raw else None)
+            v_o2  = adc_to_volts(raw.get("p33") if raw else None)
+            v_nh3 = adc_to_volts(raw.get("p02") if raw else None)
+            v_h2s = adc_to_volts(raw.get("p04") if raw else None)
+
+            # pH
+            ph = None
+            if v_ph is not None:
+                ph = clamp(PH_SLOPE * v_ph + PH_OFFSET, 0.0, 14.0)
+
+            # O2 mg/L (lineal por defecto)
+            o2_mgl = map_linear(v_o2, DO_V_MIN, DO_V_MAX, 0.0, DO_MG_L_MAX)
+
+            # NH3 ppm (lineal por defecto)
+            nh3_ppm = map_linear(v_nh3, NH3_V_MIN, NH3_V_MAX, 0.0, NH3_PPM_MAX)
+
+            # H2S ppm (lineal por defecto)
+            h2s_ppm = map_linear(v_h2s, H2S_V_MIN, H2S_V_MAX, 0.0, H2S_PPM_MAX)
+
+            return {
+                "pH": ph,
+                "O2_mgL": o2_mgl,
+                "NH3_ppm": nh3_ppm,
+                "H2S_ppm": h2s_ppm,
+                "pH_V": v_ph,
+                "O2_V": v_o2,
+                "NH3_V": v_nh3,
+                "H2S_V": v_h2s,
+            }
+        except Exception as e:
+            error(f"Error al convertir lecturas analógicas a unidades reales: {e}")
+            return None
+
 
 class RS485Sensor:
     def __init__(self):
@@ -107,29 +229,25 @@ class RS485Sensor:
             "ambient_temperature": self._get_reading(self.commands[2], "ambient_temperature")
         }
 
-async def _loop():
-    """Bucle principal que coordina la lectura de todos los sensores."""
-    rs485_reader = None
-    try:
-        analog_reader = AnalogSensors()
+# =========================
+#         Tarea
+# =========================
 
-        if sensor_params.ENABLE_RS485:
-            rs485_reader = RS485Sensor()
-            info("Módulo RS485 HABILITADO.")
-        else:
-            info("Módulo RS485 DESHABILITADO por configuración.")
 
-        info("Tarea de sensores iniciada. Intervalo de lectura: 15s")
-    except Exception as e:
-        error(f"Fallo crítico al inicializar sensores, la tarea no se ejecutará: {e}")
-        return
-
-    while True:
-        analog_data = analog_reader.read()
+        # Analógico crudo
+        analog_data = analog_reader.read_raw()
         if analog_data:
             current_readings["analog"].update(analog_data)
-            info(f"Lecturas Analógicas: {current_readings['analog']}")
 
+            # Ingenierizado (reales)
+            eng = analog_reader.compute_engineered(analog_data)
+            if eng:
+                current_readings["eng"].update(eng)
+
+            info(f"Lecturas Analógicas (crudo): {current_readings['analog']}")
+            info(f"Lecturas Analógicas (reales): {current_readings['eng']}")
+
+        # RS485
         if rs485_reader:
             rs485_data = rs485_reader.read()
             if rs485_data:

@@ -13,10 +13,10 @@ SDA_PIN = 21
 MODE_SW1_PIN = 25   # Pin para activar el MODO DEMO
 MODE_SW2_PIN = 26   # Pin de repuesto para futuros modos
 
-ANALOG_PIN_1 = 32
-ANALOG_PIN_2 = 33
-ANALOG_PIN_3 = 2
-ANALOG_PIN_4 = 4
+ANALOG_PIN_1 = 32  #PH
+ANALOG_PIN_2 = 33  #Oxigeno
+ANALOG_PIN_3 = 2 #NH3
+ANALOG_PIN_4 = 4 #S2H
 
 def i2c():
     return SoftI2C(scl=Pin(SCL_PIN), sda=Pin(SDA_PIN))
