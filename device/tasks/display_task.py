@@ -24,14 +24,14 @@ async def _loop():
 
         # Izquierda: nivel (RS485)
         level = current_readings.get("rs485", {}).get("level")
-        left3 = f"Level: {level:.2f}m" if level is not None else "Level: ---"
+        left3 = f"Level: {level:.2f}m" if isinstance(level, (int, float)) else "Level: ---"
 
-        # ==== DERECHA: valores REALES desde 'eng' (sensor_task) ====
+        # DERECHA: valores REALES desde 'eng'
         e = current_readings.get("eng", {})
-        ph   = e.get("pH")         # unidades pH
-        o2   = e.get("O2_mgL")     # mg/L
-        nh3  = e.get("NH3_ppm")    # ppm
-        h2s  = e.get("H2S_ppm")    # ppm
+        ph  = e.get("pH")
+        o2  = e.get("O2_mgL")
+        nh3 = e.get("NH3_ppm")
+        h2s = e.get("H2S_ppm")
 
         def val(v, fmt):
             try:
@@ -39,37 +39,27 @@ async def _loop():
             except:
                 return "---"
 
-        # Compactos para que quepan en el borde derecho (≤ 8 chars)
-        right1 = f"pH:{val(ph,'{:.2f}')}"     # ej: pH:7.02
-        right2 = f"O2:{val(o2,'{:.1f}')}"     # ej: O2:8.5
-        right3 = f"NH3:{val(nh3,'{:.0f}')}"   # ej: NH3:12
-        right4 = f"H2S:{val(h2s,'{:.0f}')}"   # ej: H2S:3
+        right1 = f"pH:{val(ph,'{:.2f}')}"[:8]
+        right2 = f"O2:{val(o2,'{:.1f}')}"[:8]
+        right3 = f"NH3:{val(nh3,'{:.0f}')}"[:8]
+        right4 = f"H2S:{val(h2s,'{:.0f}')}"[:8]
 
-        right1 = right1[:8]
-        right2 = right2[:8]
-        right3 = right3[:8]
-        right4 = right4[:8]
-
-        # Ensamble simple: izquierda + espacios + derecha, total <= 20
         def pack(left_text, right_text):
             L = (left_text or "")
             R = (right_text or "")
             max_left = _COLS - len(R) - 1
             if max_left < 0:
-                # Si por alguna razón R es largo, recortamos más
                 R = R[-(_COLS - 1):]
                 max_left = _COLS - len(R) - 1
             if len(L) > max_left:
                 L = L[:max_left]
-            spaces = _COLS - len(L) - len(R)
-            if spaces < 1:
-                spaces = 1
+            spaces = max(1, _COLS - len(L) - len(R))
             return (L + (" " * spaces) + R)[:_COLS]
 
-        line1 = pack(left1, right1)  # Day ...         pH:7.02
-        line2 = pack(left2, right2)  # Pump ...        O2:8.5
-        line3 = pack(left3, right3)  # Level ...       NH3:12
-        line4 = pack("",    right4)  #                H2S:3
+        line1 = pack(left1, right1)
+        line2 = pack(left2, right2)
+        line3 = pack(left3, right3)
+        line4 = pack("",    right4)
 
         write((line1, line2, line3, line4))
         await asyncio.sleep(3)
