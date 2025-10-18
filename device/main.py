@@ -5,16 +5,17 @@ import time
 import gc
 from utils.logger import info, error
 import system_state
+import web_server # <-- Mantenemos esta importación aquí
+from machine import WDT # <-- Esta puede quedarse o moverse, es pequeña
 
 CURRENT_MODE = system_state.get_mode()
 
 if CURRENT_MODE == 'PROGRAM':
     info("Modo PROGRAM activo. No se inician tareas. REPL disponible.")
 else:
-    from machine import WDT
-    from hw import button
-    from tasks import control_task, display_task, sensor_task
-    import web_server
+    # --- CAMBIO: QUITAMOS LAS IMPORTACIONES DE TAREAS DE AQUÍ ---
+    # from hw import button  <-- BORRAR
+    # from tasks import control_task, display_task, sensor_task <-- BORRAR
 
     _START_TIME_FILE = "start_time.txt"
     _WDT_TIMEOUT_MS = 300000
@@ -38,26 +39,39 @@ else:
         except Exception as e:
             error(f"No se pudo crear el archivo de inicio: {e}")
 
+    # Necesitamos display_task aquí, así que lo importamos justo a tiempo
+    from tasks import display_task
     display_task.set_start_time(start_timestamp)
     web_server.set_inoculation_start_time(start_timestamp)
 
     async def main():
         if CURRENT_MODE == 'EMERGENCY':
             info("!!! MODO EMERGENCIA ACTIVADO !!!")
+            # Importación justo a tiempo para el modo emergencia
+            from tasks import control_task
             uasyncio.create_task(control_task._compressor_loop())
         else:
             info("Iniciando tareas de operación normal/demo...")
             
-            control_task.start()
-            display_task.start()
-            sensor_task.start()
-            uasyncio.create_task(button.button.run())
-
             info("Limpiando memoria antes de iniciar tareas de red...")
             gc.collect()
             info(f"Memoria libre: {gc.mem_free()} bytes")
             
             uasyncio.create_task(web_server.start_server())
+            
+            # Damos un pequeño respiro para que la tarea de red comience
+            await uasyncio.sleep(2)
+
+            # --- CAMBIO: IMPORTAR LOS MÓDULOS RESTANTES AQUÍ ---
+            info("Red iniciada. Importando módulos de tareas de bajo nivel...")
+            from hw import button
+            from tasks import control_task, sensor_task
+            
+            info("Iniciando tareas de bajo nivel (sensores, control, display)...")
+            control_task.start()
+            display_task.start() # Ya fue importado antes
+            sensor_task.start()
+            uasyncio.create_task(button.button.run())
             
             info("Todas las tareas principales han sido lanzadas.")
 
