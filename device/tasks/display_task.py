@@ -7,8 +7,33 @@ from ui.display import init as lcd_init, write
 from tasks.sensor_task import current_readings
 
 start_timestamp = 0
+current_page = 0
+PAGE_COUNT = 2
+
+def ljust_manual(s, width, fillchar=' '):
+    """Implementación manual de ljust para MicroPython."""
+    ln = len(s)
+    if ln >= width:
+        return s
+    return s + (fillchar * (width - ln))
+
+def _format_val(val, precision=0):
+    """Función helper para formatear valores o mostrar '---'."""
+    if val is None:
+        return ljust_manual("---", 4)
+    
+    s_val = ""
+    if precision == 0:
+        s_val = str(int(val))
+    else:
+        s_val = "{:.{}f}".format(val, precision)
+    
+    return ljust_manual(s_val, 4)
+
 
 async def _loop():
+    global current_page
+    
     while True:
         if start_timestamp > 0:
             seconds_elapsed = time() - start_timestamp
@@ -19,18 +44,35 @@ async def _loop():
 
         pump_line = "Pump ON" if relays.pump_is_on() else "Pump OFF"
         
-        level = current_readings["rs485"].get("level")
-        level_line = f"Level: {level:.2f}m" if level is not None else "Level: ---"
+        line_3 = ""
+        line_4 = ""
 
-        p32_val = current_readings["analog"].get("p32")
-        analog_line = f"Ana1: {p32_val}" if p32_val is not None else "Ana1: ---"
+        if current_page == 0:
+
+            ph_val = _format_val(current_readings["analog"].get("ph"))
+            oxi_val = _format_val(current_readings["analog"].get("oxigeno"))
+            nh3_val = _format_val(current_readings["analog"].get("nh3_ppm"), 1) # 1 decimal
+            s2h_val = _format_val(current_readings["analog"].get("s2h_ppm"), 1) # 1 decimal
+
+            line_3 = f"PH:  {ph_val} Oxi: {oxi_val}"
+            line_4 = f"NH3: {nh3_val} S2H: {s2h_val}"
+            
+        elif current_page == 1:
+
+            level_val = _format_val(current_readings["rs485"].get("level"), 2)
+            rs485_t_val = _format_val(current_readings["rs485"].get("rs485_temperature"), 1)
+            amb_t_val = _format_val(current_readings["rs485"].get("ambient_temperature"), 1)
+
+            line_3 = f"Level: {level_val} m"
+            line_4 = f"T(RS): {rs485_t_val} T(A): {amb_t_val}"
 
         write((
-            day_line,
-            pump_line,
-            level_line,
-            analog_line
+            ljust_manual(day_line, 20),
+            ljust_manual(pump_line, 20),
+            ljust_manual(line_3, 20),
+            ljust_manual(line_4, 20)
         ))
+        current_page = (current_page + 1) % PAGE_COUNT
         await asyncio.sleep(3)
 
 def start():
