@@ -1,47 +1,82 @@
 # device/tasks/sensor_task.py
 
 import uasyncio as asyncio
-from machine import ADC, Pin, UART
+from machine import Pin, UART, ADC
 import time
 import struct
 from utils.logger import info, error
-from config import pins
-from config import sensor_params
+from config import pins, sensor_params
+from config.pins import i2c
+from utils.drivers.ads1x15 import ADS1115
+
+ADC_MIN_RAW = 0.0
+ADC_MAX_RAW = 32767.0
+
+NH3_PPM_MIN = 1.0
+NH3_PPM_MAX = 300.0
+
+H2S_PPM_MIN = 0.5
+H2S_PPM_MAX = 50.0
+
+gain_index = 1 
 
 current_readings = {
     "analog": {
-        "p32": None, "p33": None, "p02": None, "p04": None,
+        "ph": None,         # Pin 32 (ADC1) - Crudo
+        "oxigeno": None,    # Pin 33 (ADC1) - Crudo
+        "nh3_ppm": None,    # Mux I2C Canal 0 - Convertido a PPM
+        "s2h_ppm": None,    # Mux I2C Canal 1 - Convertido a PPM
     },
     "rs485": {
         "level": None, "rs485_temperature": None, "ambient_temperature": None,
     }
 }
 
-class AnalogSensors:
-    def __init__(self):
+class HybridAnalogSensors:
+    """Lee de 2 ADC internos (PH, Oxi) y del ADC I2C (NH3, S2H)."""
+    def __init__(self, i2c_bus, gain_index_val=1):
         try:
-            self.adc_p32 = ADC(Pin(pins.ANALOG_PIN_1))
-            self.adc_p33 = ADC(Pin(pins.ANALOG_PIN_2))
-            self.adc_p02 = ADC(Pin(pins.ANALOG_PIN_3))
-            self.adc_p04 = ADC(Pin(pins.ANALOG_PIN_4))
+            self.adc_mux = ADS1115(i2c_bus, gain=gain_index_val)
+            info(f"Sensor ADC ADS1115 (NH3/S2H) inicializado.")
+
+            self.adc_ph = ADC(Pin(pins.PH_PIN))
+            self.adc_ph.atten(ADC.ATTN_11DB)
+            info(f"Sensor PH (ADC1 Pin {pins.PH_PIN}) inicializado.")
+
+            self.adc_oxigeno = ADC(Pin(pins.OXIGENO_PIN))
+            self.adc_oxigeno.atten(ADC.ATTN_11DB)
+            info(f"Sensor Oxigeno (ADC1 Pin {pins.OXIGENO_PIN}) inicializado.")
             
-            self.adc_p32.atten(ADC.ATTN_11DB)
-            self.adc_p33.atten(ADC.ATTN_11DB)
-            self.adc_p02.atten(ADC.ATTN_11DB)
-            self.adc_p04.atten(ADC.ATTN_11DB)
-            info("Sensores analógicos inicializados.")
         except Exception as e:
-            error(f"No se pudieron inicializar los ADC: {e}")
+            error(f"No se pudo inicializar el hardware de sensores analógicos: {e}")
             raise
 
+    def _map_value(self, x, in_min, in_max, out_min, out_max):
+        """Mapea un valor de un rango a otro, linealmente."""
+        if x < in_min:
+            x = in_min
+        if in_max == in_min:
+            return out_min
+        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+
     def read(self):
+        """Lee todos los sensores y aplica la conversión lineal a los de I2C."""
         try:
-            return {
-                "p32": self.adc_p32.read(), "p33": self.adc_p33.read(),
-                "p02": self.adc_p02.read(), "p04": self.adc_p04.read(),
+            raw_nh3 = self.adc_mux.read(rate=4, channel1=0)
+            raw_s2h = self.adc_mux.read(rate=4, channel1=1)
+
+            ppm_nh3 = self._map_value(raw_nh3, ADC_MIN_RAW, ADC_MAX_RAW, NH3_PPM_MIN, NH3_PPM_MAX)
+            ppm_s2h = self._map_value(raw_s2h, ADC_MIN_RAW, ADC_MAX_RAW, H2S_PPM_MIN, H2S_PPM_MAX)
+
+            data = {
+                "ph": self.adc_ph.read(),
+                "oxigeno": self.adc_oxigeno.read(),
+                "nh3_ppm": ppm_nh3,
+                "s2h_ppm": ppm_s2h,
             }
+            return data
         except Exception as e:
-            error(f"Error al leer sensores analógicos: {e}")
+            error(f"Error al leer sensores analógicos (híbrido): {e}")
             return None
 
 class RS485Sensor:
@@ -107,11 +142,17 @@ class RS485Sensor:
             "ambient_temperature": self._get_reading(self.commands[2], "ambient_temperature")
         }
 
+
+# --- 5. BUCLE PRINCIPAL Y START (Sin cambios) ---
 async def _loop():
     """Bucle principal que coordina la lectura de todos los sensores."""
     rs485_reader = None
     try:
-        analog_reader = AnalogSensors()
+        i2c_bus = i2c()
+        info("Bus I2C para sensores inicializado.")
+
+        # Instanciamos el lector HÍBRIDO actualizado
+        analog_reader = HybridAnalogSensors(i2c_bus, gain_index_val=gain_index)
 
         if sensor_params.ENABLE_RS485:
             rs485_reader = RS485Sensor()
