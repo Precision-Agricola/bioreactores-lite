@@ -17,10 +17,10 @@ def ljust_manual(s, width, fillchar=' '):
         return s
     return s + (fillchar * (width - ln))
 
-def _format_val(val, precision=0):
+def _format_val(val, precision=0, width=4):
     """Función helper para formatear valores o mostrar '---'."""
     if val is None:
-        return ljust_manual("---", 4)
+        return ljust_manual("---", width)
     
     s_val = ""
     if precision == 0:
@@ -28,7 +28,7 @@ def _format_val(val, precision=0):
     else:
         s_val = "{:.{}f}".format(val, precision)
     
-    return ljust_manual(s_val, 4)
+    return ljust_manual(s_val, width)
 
 
 async def _loop():
@@ -51,20 +51,25 @@ async def _loop():
 
             ph_val = _format_val(current_readings["analog"].get("ph"))
             oxi_val = _format_val(current_readings["analog"].get("oxigeno"))
-            nh3_val = _format_val(current_readings["analog"].get("nh3_ppm"), 1) # 1 decimal
-            s2h_val = _format_val(current_readings["analog"].get("s2h_ppm"), 1) # 1 decimal
+            nh3_val = _format_val(current_readings["analog"].get("nh3_ppm"), 1)
+            s2h_val = _format_val(current_readings["analog"].get("s2h_ppm"), 1)
 
             line_3 = f"PH:  {ph_val} Oxi: {oxi_val}"
             line_4 = f"NH3: {nh3_val} S2H: {s2h_val}"
             
         elif current_page == 1:
+            
+            rs485_t_val_k = current_readings["rs485"].get("rs485_temperature")
+            amb_t_val_c = current_readings["rs485"].get("ambient_temperature")
 
-            level_val = _format_val(current_readings["rs485"].get("level"), 2)
-            rs485_t_val = _format_val(current_readings["rs485"].get("rs485_temperature"), 1)
-            amb_t_val = _format_val(current_readings["rs485"].get("ambient_temperature"), 1)
+            rs485_t_val_c = (rs485_t_val_k - 273.15) if rs485_t_val_k is not None else None
+            
+            level_val = _format_val(current_readings["rs485"].get("level"), 2, 5)
+            rs485_t_val = _format_val(rs485_t_val_c, 1, 5)
+            amb_t_val = _format_val(amb_t_val_c, 1, 4)
 
             line_3 = f"Level: {level_val} m"
-            line_4 = f"T(RS): {rs485_t_val} T(A): {amb_t_val}"
+            line_4 = f"TRS:{rs485_t_val} TA:{amb_t_val}"
 
         write((
             ljust_manual(day_line, 20),

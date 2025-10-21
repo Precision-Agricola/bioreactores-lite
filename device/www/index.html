@@ -53,7 +53,7 @@
         .header-title {
             margin: 0;
             font-size: 1.8em;
-            color: white; 
+            color: white;  
             font-weight: 700;
         }
 
@@ -84,6 +84,15 @@
             padding-bottom: 10px;
             margin-bottom: 15px;
         }
+        
+        /* h3 más pequeño para los sensores */
+        .card h3 {
+            font-size: 1.0em;
+            color: var(--text-color);
+            border-bottom: none;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
 
         .status-grid {
             display: grid;
@@ -104,6 +113,13 @@
         .status-value {
             font-size: 1.2em;
             font-weight: 400;
+        }
+        
+        /* Unidad más pequeña para los sensores */
+        .status-item .status-value {
+            font-size: 0.9em;
+            font-weight: 400;
+            color: #aaa;
         }
 
         .status-on { color: var(--primary-color); }
@@ -156,6 +172,7 @@
             color: var(--card-color);
         }
 
+        /* ... (Estilos de .btn-reset, .switch, .slider, footer sin cambios) ... */
         .btn-reset {
             padding: 8px 12px;
             font-size: 0.9em;
@@ -171,8 +188,6 @@
             background-color: var(--secondary-color);
             color: var(--card-color);
         }
-
-        /* The switch */
         .switch {
             position: relative;
             display: inline-block;
@@ -195,7 +210,6 @@
             background-color: white;
             transition: .4s;
         }
-
         footer {
             text-align: center;
             font-size: 0.8em;
@@ -203,7 +217,6 @@
             width: 100%;
             max-width: 400px;
         }
-
         input:checked + .slider { background-color: var(--primary-color); }
         input:focus + .slider { box-shadow: 0 0 1px var(--primary-color); }
         input:checked + .slider:before { transform: translateX(26px); }
@@ -296,11 +309,10 @@
                 <p id="pump-status" class="status-text status-off">APAGADA</p>
             </div>
             <div class="card status-item">
-                <h2>Flujo</h2>
-                <p class="status-text"><span id="flow-lpm">0.00</span> <span class="status-value">L/min</span></p>
+                <h2>Nivel</h2>
+                <p class="status-text"><span id="level-m">--</span> <span class="status-value">m</span></p>
             </div>
         </section>
-
         <section class="card">
             <h2>Estado del Proceso</h2>
             <div class="status-grid">
@@ -311,10 +323,10 @@
                 <div class="status-item">
                     <h3>Aireadores</h3>
                     <div class="aerator-status">
-                        <span>1:</span> <span id="aerator1-status" class="status-text">ON</span>
+                        <span>1:</span> <span id="aerator1-status" class="status-text">--</span>
                     </div>
                     <div class="aerator-status">
-                        <span>2:</span> <span id="aerator2-status" class="status-text">ON</span>
+                        <span>2:</span> <span id="aerator2-status" class="status-text">--</span>
                     </div>
                 </div>
             </div>
@@ -335,12 +347,37 @@
         </section>
 
         <section class="card">
-            <h2>Consorcio</h2>
-            <p class="info-text">
-                Este bio-reactor utiliza un consorcio de microorganismos especializados, incluyendo <strong>micorrizas</strong>, para mejorar la solubilización de nutrientes y la salud del suelo.
-            </p>
+            <h2>Sensores</h2>
+            <div class="status-grid" style="gap: 25px 15px;">
+                <div class="status-item">
+                    <h3>PH</h3>
+                    <p class="status-text"><span id="ph-val">--</span> <span class="status-value">raw</span></p>
+                </div>
+                <div class="status-item">
+                    <h3>Oxígeno</h3>
+                    <p class="status-text"><span id="oxigeno-val">--</span> <span class="status-value">raw</span></p>
+                </div>
+                
+                <div class="status-item">
+                    <h3>NH3</h3>
+                    <p class="status-text"><span id="nh3-ppm">--</span> <span class="status-value">ppm</span></p>
+                </div>
+                <div class="status-item">
+                    <h3>H2S</h3>
+                    <p class="status-text"><span id="s2h-ppm">--</span> <span class="status-value">ppm</span></p>
+                </div>
+                
+                <div class="status-item">
+                    <h3>Temp. RS485</h3>
+                    <p class="status-text"><span id="temp-rs-c">--</span> <span class="status-value">°C</span></p>
+                </div>
+                <div class="status-item">
+                    <h3>Temp. Ambiente</h3>
+                    <p class="status-text"><span id="temp-amb-c">--</span> <span class="status-value">°C</span></p>
+                </div>
+            </div>
         </section>
-    </main>
+        </main>
 
     <footer>
         <p id="version-info"></p>
@@ -348,8 +385,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // --- IDs de Elementos ---
             const pumpStatusEl = document.getElementById('pump-status');
-            const flowLpmEl = document.getElementById('flow-lpm');
             const pumpToggleEl = document.getElementById('pump-toggle');
             const inoculationDaysEl = document.getElementById('inoculation-days');
             const resetInoculationBtn = document.getElementById('reset-inoculation');
@@ -357,17 +394,34 @@
             const aerator2StatusEl = document.getElementById('aerator2-status');
             const versionInfoEl = document.getElementById('version-info');
 
+            // --- IDs Nuevos y Modificados ---
+            const levelMEl = document.getElementById('level-m'); // Reemplaza a flowLpmEl
+            const phValEl = document.getElementById('ph-val');
+            const oxigenoValEl = document.getElementById('oxigeno-val');
+            const nh3PpmEl = document.getElementById('nh3-ppm');
+            const s2hPpmEl = document.getElementById('s2h-ppm');
+            const tempRsCEl = document.getElementById('temp-rs-c');
+            const tempAmbCEl = document.getElementById('temp-amb-c');
+            
+            // --- Helper para formatear valores null/undefined ---
+            const formatValue = (value, decimals = 0, fallback = '--') => {
+                if (value === null || typeof value === 'undefined') {
+                    return fallback;
+                }
+                return value.toFixed(decimals);
+            };
+
             const updateStatus = async () => {
                 try {
                     const response = await fetch('/api/status');
                     if (!response.ok) throw new Error('Network response was not ok');
                     const data = await response.json();
 
+                    // --- Estado y Proceso ---
                     pumpToggleEl.checked = data.pump_on;
                     pumpStatusEl.textContent = data.pump_on ? 'ENCENDIDA' : 'APAGADA';
                     pumpStatusEl.className = 'status-text ' + (data.pump_on ? 'status-on' : 'status-off');
 
-                    flowLpmEl.textContent = data.flow_lpm.toFixed(2);
                     inoculationDaysEl.textContent = data.inoculation_days;
 
                     aerator1StatusEl.textContent = data.aerator1_on ? 'ON' : 'OFF';
@@ -380,16 +434,47 @@
                         versionInfoEl.textContent = `Firmware: ${data.version}`;
                     }
 
+                    // --- NUEVA LÓGICA DE SENSORES ---
+                    if (data.sensors) {
+                        // Grupo Analógico
+                        phValEl.textContent = formatValue(data.sensors.analog.ph, 0);
+                        oxigenoValEl.textContent = formatValue(data.sensors.analog.oxigeno, 0);
+                        nh3PpmEl.textContent = formatValue(data.sensors.analog.nh3_ppm, 2);
+                        s2hPpmEl.textContent = formatValue(data.sensors.analog.s2h_ppm, 2);
+
+                        // Grupo RS485
+                        levelMEl.textContent = formatValue(data.sensors.rs485.level, 2);
+                        
+                        // Conversión de Temperatura (T(RS) viene en Kelvin)
+                        const tempRSK = data.sensors.rs485.rs485_temperature;
+                        const tempRSC = (tempRSK !== null) ? (tempRSK - 273.15) : null;
+                        tempRsCEl.textContent = formatValue(tempRSC, 1);
+                        
+                        // T(A) ya viene en Celsius
+                        const tempAmb = data.sensors.rs485.ambient_temperature;
+                        tempAmbCEl.textContent = formatValue(tempAmb, 1);
+                    }
+                    // --- FIN DE LÓGICA DE SENSORES ---
+
                 } catch (error) {
                     console.error('Error al actualizar estado:', error);
                     pumpStatusEl.textContent = 'ERROR';
                     pumpStatusEl.className = 'status-text status-off';
                     aerator1StatusEl.textContent = 'ERR';
                     aerator2StatusEl.textContent = 'ERR';
-                    versionInfoEl.textContent = 'Firmware: --';
+                    
+                    // Resetear sensores en caso de error
+                    levelMEl.textContent = '--';
+                    phValEl.textContent = '--';
+                    oxigenoValEl.textContent = '--';
+                    nh3PpmEl.textContent = '--';
+                    s2hPpmEl.textContent = '--';
+                    tempRsCEl.textContent = '--';
+                    tempAmbCEl.textContent = '--';
                 }
             };
 
+            // --- Funciones de Control (SIN CAMBIOS) ---
             const togglePump = async () => {
                 try {
                     const response = await fetch('/api/control', {
@@ -399,7 +484,7 @@
                     });
                     if (!response.ok) throw new Error('Control command failed');
                     
-                    await updateStatus();
+                    await updateStatus(); // Actualiza inmediatamente
 
                 } catch (error) {
                     console.error('Error al controlar la bomba:', error);
