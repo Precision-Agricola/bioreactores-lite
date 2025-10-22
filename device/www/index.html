@@ -351,11 +351,11 @@
             <div class="status-grid" style="gap: 25px 15px;">
                 <div class="status-item">
                     <h3>PH</h3>
-                    <p class="status-text"><span id="ph-val">--</span> <span class="status-value">raw</span></p>
+                    <p class="status-text"><span id="ph-val">--</span> <span class="status-value">pH</span></p>
                 </div>
                 <div class="status-item">
-                    <h3>Oxígeno</h3>
-                    <p class="status-text"><span id="oxigeno-val">--</span> <span class="status-value">raw</span></p>
+                    <h3>Oxígeno (DO)</h3>
+                    <p class="status-text"><span id="do-val">--</span> <span class="status-value">mg/L</span></p>
                 </div>
                 
                 <div class="status-item">
@@ -397,13 +397,12 @@
             // --- IDs Nuevos y Modificados ---
             const levelMEl = document.getElementById('level-m'); // Reemplaza a flowLpmEl
             const phValEl = document.getElementById('ph-val');
-            const oxigenoValEl = document.getElementById('oxigeno-val');
+            const doValEl = document.getElementById('do-val'); // ID actualizado
             const nh3PpmEl = document.getElementById('nh3-ppm');
             const s2hPpmEl = document.getElementById('s2h-ppm');
             const tempRsCEl = document.getElementById('temp-rs-c');
             const tempAmbCEl = document.getElementById('temp-amb-c');
             
-            // --- Helper para formatear valores null/undefined ---
             const formatValue = (value, decimals = 0, fallback = '--') => {
                 if (value === null || typeof value === 'undefined') {
                     return fallback;
@@ -436,21 +435,19 @@
 
                     // --- NUEVA LÓGICA DE SENSORES ---
                     if (data.sensors) {
-                        // Grupo Analógico
-                        phValEl.textContent = formatValue(data.sensors.analog.ph, 0);
-                        oxigenoValEl.textContent = formatValue(data.sensors.analog.oxigeno, 0);
+                        // Grupo Analógico (claves actualizadas)
+                        phValEl.textContent = formatValue(data.sensors.analog.ph_value, 2);
+                        doValEl.textContent = formatValue(data.sensors.analog.do_mg_l, 2);
                         nh3PpmEl.textContent = formatValue(data.sensors.analog.nh3_ppm, 2);
                         s2hPpmEl.textContent = formatValue(data.sensors.analog.s2h_ppm, 2);
 
-                        // Grupo RS485
+                        // Grupo RS485 (Sin cambios)
                         levelMEl.textContent = formatValue(data.sensors.rs485.level, 2);
                         
-                        // Conversión de Temperatura (T(RS) viene en Kelvin)
                         const tempRSK = data.sensors.rs485.rs485_temperature;
                         const tempRSC = (tempRSK !== null) ? (tempRSK - 273.15) : null;
                         tempRsCEl.textContent = formatValue(tempRSC, 1);
                         
-                        // T(A) ya viene en Celsius
                         const tempAmb = data.sensors.rs485.ambient_temperature;
                         tempAmbCEl.textContent = formatValue(tempAmb, 1);
                     }

@@ -21,13 +21,7 @@ def _format_val(val, precision=0, width=4):
     """Función helper para formatear valores o mostrar '---'."""
     if val is None:
         return ljust_manual("---", width)
-    
-    s_val = ""
-    if precision == 0:
-        s_val = str(int(val))
-    else:
-        s_val = "{:.{}f}".format(val, precision)
-    
+    s_val = "{:.{}f}".format(val, precision)
     return ljust_manual(s_val, width)
 
 
@@ -48,13 +42,12 @@ async def _loop():
         line_4 = ""
 
         if current_page == 0:
-
-            ph_val = _format_val(current_readings["analog"].get("ph"))
-            oxi_val = _format_val(current_readings["analog"].get("oxigeno"))
+            ph_val = _format_val(current_readings["analog"].get("ph_value"), 1)
+            oxi_val = _format_val(current_readings["analog"].get("do_mg_l"), 1)
             nh3_val = _format_val(current_readings["analog"].get("nh3_ppm"), 1)
             s2h_val = _format_val(current_readings["analog"].get("s2h_ppm"), 1)
 
-            line_3 = f"PH:  {ph_val} Oxi: {oxi_val}"
+            line_3 = f"PH:  {ph_val} DO: {oxi_val}"
             line_4 = f"NH3: {nh3_val} S2H: {s2h_val}"
             
         elif current_page == 1:

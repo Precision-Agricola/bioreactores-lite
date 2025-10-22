@@ -9,23 +9,26 @@ from config import pins, sensor_params
 from config.pins import i2c
 from utils.drivers.ads1x15 import ADS1115
 
+DO_ADC_RAW_MAX = 3722.0
+DO_MG_L_MAX = 20.0
+
+PH_SLOPE = 3.5 
+PH_OFFSET = 0.0
+
 ADC_MIN_RAW = 0.0
 ADC_MAX_RAW = 32767.0
-
 NH3_PPM_MIN = 1.0
 NH3_PPM_MAX = 300.0
-
 H2S_PPM_MIN = 0.5
 H2S_PPM_MAX = 50.0
-
-gain_index = 1 
+gain_index = 1
 
 current_readings = {
     "analog": {
-        "ph": None,         # Pin 32 (ADC1) - Crudo
-        "oxigeno": None,    # Pin 33 (ADC1) - Crudo
-        "nh3_ppm": None,    # Mux I2C Canal 0 - Convertido a PPM
-        "s2h_ppm": None,    # Mux I2C Canal 1 - Convertido a PPM
+        "ph_value": None,
+        "do_mg_l": None,
+        "nh3_ppm": None,
+        "s2h_ppm": None,
     },
     "rs485": {
         "level": None, "rs485_temperature": None, "ambient_temperature": None,
@@ -33,7 +36,6 @@ current_readings = {
 }
 
 class HybridAnalogSensors:
-    """Lee de 2 ADC internos (PH, Oxi) y del ADC I2C (NH3, S2H)."""
     def __init__(self, i2c_bus, gain_index_val=1):
         try:
             self.adc_mux = ADS1115(i2c_bus, gain=gain_index_val)
@@ -62,15 +64,25 @@ class HybridAnalogSensors:
     def read(self):
         """Lee todos los sensores y aplica la conversión lineal a los de I2C."""
         try:
+
+            raw_ph = self.adc_ph.read()
+            raw_oxi = self.adc_oxigeno.read()
+            
             raw_nh3 = self.adc_mux.read(rate=4, channel1=0)
             raw_s2h = self.adc_mux.read(rate=4, channel1=1)
 
+            do_mg_l = self._map_value(raw_oxi, 0.0, DO_ADC_RAW_MAX, 0.0, DO_MG_L_MAX)
+
+            v_ph = (raw_ph / 4095.0) * 3.3
+            ph_uncalibrated = PH_SLOPE * v_ph
+            ph_value = ph_uncalibrated + PH_OFFSET
+
             ppm_nh3 = self._map_value(raw_nh3, ADC_MIN_RAW, ADC_MAX_RAW, NH3_PPM_MIN, NH3_PPM_MAX)
             ppm_s2h = self._map_value(raw_s2h, ADC_MIN_RAW, ADC_MAX_RAW, H2S_PPM_MIN, H2S_PPM_MAX)
-
+            
             data = {
-                "ph": self.adc_ph.read(),
-                "oxigeno": self.adc_oxigeno.read(),
+                "ph_value": ph_value,
+                "do_mg_l": do_mg_l,
                 "nh3_ppm": ppm_nh3,
                 "s2h_ppm": ppm_s2h,
             }
@@ -143,7 +155,6 @@ class RS485Sensor:
         }
 
 
-# --- 5. BUCLE PRINCIPAL Y START (Sin cambios) ---
 async def _loop():
     """Bucle principal que coordina la lectura de todos los sensores."""
     rs485_reader = None
@@ -151,7 +162,6 @@ async def _loop():
         i2c_bus = i2c()
         info("Bus I2C para sensores inicializado.")
 
-        # Instanciamos el lector HÍBRIDO actualizado
         analog_reader = HybridAnalogSensors(i2c_bus, gain_index_val=gain_index)
 
         if sensor_params.ENABLE_RS485:
