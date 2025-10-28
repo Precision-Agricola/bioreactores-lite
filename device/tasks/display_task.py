@@ -11,19 +11,15 @@ current_page = 0
 PAGE_COUNT = 2
 
 def ljust_manual(s, width, fillchar=' '):
-    """Implementación manual de ljust para MicroPython."""
     ln = len(s)
-    if ln >= width:
-        return s
+    if ln >= width: return s
     return s + (fillchar * (width - ln))
 
 def _format_val(val, precision=0, width=4):
-    """Función helper para formatear valores o mostrar '---'."""
     if val is None:
         return ljust_manual("---", width)
     s_val = "{:.{}f}".format(val, precision)
     return ljust_manual(s_val, width)
-
 
 async def _loop():
     global current_page
@@ -42,6 +38,7 @@ async def _loop():
         line_4 = ""
 
         if current_page == 0:
+            # Página 1 (Sin cambios)
             ph_val = _format_val(current_readings["analog"].get("ph_value"), 1)
             oxi_val = _format_val(current_readings["analog"].get("do_mg_l"), 1)
             nh3_val = _format_val(current_readings["analog"].get("nh3_ppm"), 1)
@@ -51,17 +48,21 @@ async def _loop():
             line_4 = f"NH3: {nh3_val} S2H: {s2h_val}"
             
         elif current_page == 1:
+            # Página 2 (MODIFICADA)
             
+            # --- CAMBIO 1: El nivel ahora se lee en CM ---
+            level_val = _format_val(current_readings["rs485"].get("level"), 1, 5) # 1 decimal (ej: 19.4)
+            
+            # T(RS) y T(A) ahora leerán 'None' y mostrarán '---'
             rs485_t_val_k = current_readings["rs485"].get("rs485_temperature")
             amb_t_val_c = current_readings["rs485"].get("ambient_temperature")
-
             rs485_t_val_c = (rs485_t_val_k - 273.15) if rs485_t_val_k is not None else None
             
-            level_val = _format_val(current_readings["rs485"].get("level"), 2, 5)
             rs485_t_val = _format_val(rs485_t_val_c, 1, 5)
             amb_t_val = _format_val(amb_t_val_c, 1, 4)
 
-            line_3 = f"Level: {level_val} m"
+            # --- CAMBIO 2: Unidad cambiada a 'cm' ---
+            line_3 = f"Level: {level_val} cm"
             line_4 = f"TRS:{rs485_t_val} TA:{amb_t_val}"
 
         write((
@@ -70,6 +71,7 @@ async def _loop():
             ljust_manual(line_3, 20),
             ljust_manual(line_4, 20)
         ))
+        
         current_page = (current_page + 1) % PAGE_COUNT
         await asyncio.sleep(3)
 
