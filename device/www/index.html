@@ -210,6 +210,131 @@
             background-color: white;
             transition: .4s;
         }
+        .sensor-section {
+            background-color: var(--card-color);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .sensor-section h2 {
+            margin-top: 0;
+            font-size: 1.1em;
+            color: var(--secondary-color);
+            border-bottom: 1px solid var(--accent-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .sensor-grid-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+
+        .sensor-box {
+            background: rgba(142, 199, 66, 0.05);
+            border: 1px solid rgba(142, 199, 66, 0.2);
+            border-radius: 8px;
+            padding: 12px 14px;
+            transition: all 0.3s ease;
+        }
+
+        .sensor-box:hover {
+            background: rgba(142, 199, 66, 0.1);
+            border-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(142, 199, 66, 0.15);
+        }
+
+        .sensor-label {
+            font-size: 0.8em;
+            color: #999;
+            margin-bottom: 6px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sensor-data {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .sensor-number {
+            font-size: 1.7em;
+            font-weight: 700;
+            color: var(--primary-color);
+            line-height: 1;
+        }
+
+        .sensor-measure {
+            font-size: 0.85em;
+            color: #777;
+            font-weight: 500;
+        }
+        .section-divider {
+            width: 100%;
+            margin: 30px 0;
+            padding: 20px 0;
+            position: relative;
+        }
+
+        .section-divider::before,
+        .section-divider::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+        }
+
+        .section-divider::before {
+            top: 0;
+        }
+
+        .section-divider::after {
+            bottom: 0;
+        }
+
+        .divider-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 10px 20px;
+            background: linear-gradient(145deg, rgba(142, 199, 66, 0.1), rgba(69, 154, 71, 0.05));
+            border-radius: 20px;
+            border: 1px solid rgba(142, 199, 66, 0.2);
+        }
+
+        .divider-icon {
+            font-size: 1.2em;
+            color: var(--primary-color);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .divider-text {
+            font-size: 0.85em;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--secondary-color);
+            text-transform: uppercase;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.6;
+                transform: scale(1.1);
+            }
+        }
         footer {
             text-align: center;
             font-size: 0.8em;
@@ -303,6 +428,14 @@
             </svg>
         </header>
 
+        <div class="section-divider">
+            <div class="divider-content">
+                <span class="divider-icon"> </span>
+                <span class="divider-text">MONITOREO EN TIEMPO REAL</span>
+                <span class="divider-icon"> </span>
+            </div>
+        </div>
+
         <section class="status-grid">
             <div class="card status-item">
                 <h2>Bomba</h2>
@@ -346,38 +479,60 @@
             </div>
         </section>
 
-        <section class="card">
+        <section class="sensor-section">
             <h2>Sensores</h2>
-            <div class="status-grid" style="gap: 25px 15px;">
-                <div class="status-item">
-                    <h3>PH</h3>
-                    <p class="status-text"><span id="ph-val">--</span> <span class="status-value">pH</span></p>
-                </div>
-                <div class="status-item">
-                    <h3>Oxígeno (DO)</h3>
-                    <p class="status-text"><span id="do-val">--</span> <span class="status-value">mg/L</span></p>
-                </div>
-                
-                <div class="status-item">
-                    <h3>NH3</h3>
-                    <p class="status-text"><span id="nh3-ppm">--</span> <span class="status-value">ppm</span></p>
-                </div>
-                <div class="status-item">
-                    <h3>H2S</h3>
-                    <p class="status-text"><span id="s2h-ppm">--</span> <span class="status-value">ppm</span></p>
+            <div class="sensor-grid-container">
+                <div class="sensor-box">
+                    <div class="sensor-label">pH</div>
+                    <div class="sensor-data">
+                        <span class="sensor-number" id="ph-val">--</span>
+                        <span class="sensor-measure">pH</span>
+                    </div>
                 </div>
                 
-                <div class="status-item">
-                    <h3>Temp. Líquido</h3>
-                    <p class="status-text"><span id="temp-rs-c">--</span> <span class="status-value">°C</span></p>
+                <div class="sensor-box">
+                    <div class="sensor-label">Oxígeno Disuelto</div>
+                    <div class="sensor-data">
+                        <span class="sensor-number" id="do-val">--</span>
+                        <span class="sensor-measure">mg/L</span>
+                    </div>
                 </div>
-                <div class="status-item">
-                    <h3>Temp. Ambiente</h3>
-                    <p class="status-text"><span id="temp-amb-c">--</span> <span class="status-value">°C</span></p>
+                
+                <div class="sensor-box">
+                    <div class="sensor-label">Amoniaco</div>
+                    <div class="sensor-data">
+                        <span class="sensor-number" id="nh3-ppm">--</span>
+                        <span class="sensor-measure">ppm</span>
+                    </div>
+                </div>
+                
+                <div class="sensor-box">
+                    <div class="sensor-label">Sulfuro H₂S</div>
+                    <div class="sensor-data">
+                        <span class="sensor-number" id="s2h-ppm">--</span>
+                        <span class="sensor-measure">ppm</span>
+                    </div>
+                </div>
+                
+                <div class="sensor-box">
+                    <div class="sensor-label">Temperatura Líquido</div>
+                    <div class="sensor-data">
+                        <span class="sensor-number" id="temp-rs-c">--</span>
+                        <span class="sensor-measure">°C</span>
+                    </div>
+                </div>
+                
+                <div class="sensor-box">
+                    <div class="sensor-label">Temperatura Ambiente</div>
+                    <div class="sensor-data">
+                        <span class="sensor-number" id="temp-amb-c">--</span>
+                        <span class="sensor-measure">°C</span>
+                    </div>
                 </div>
             </div>
         </section>
-        </main>
+
+    </main>
 
     <footer>
         <p id="version-info"></p>
