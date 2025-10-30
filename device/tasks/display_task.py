@@ -38,7 +38,6 @@ async def _loop():
         line_4 = ""
 
         if current_page == 0:
-            # Página 1 (Sin cambios)
             ph_val = _format_val(current_readings["analog"].get("ph_value"), 1)
             oxi_val = _format_val(current_readings["analog"].get("do_mg_l"), 1)
             nh3_val = _format_val(current_readings["analog"].get("nh3_ppm"), 1)
@@ -48,22 +47,16 @@ async def _loop():
             line_4 = f"NH3: {nh3_val} S2H: {s2h_val}"
             
         elif current_page == 1:
-            # Página 2 (MODIFICADA)
-            
-            # --- CAMBIO 1: El nivel ahora se lee en CM ---
-            level_val = _format_val(current_readings["rs485"].get("level"), 1, 5) # 1 decimal (ej: 19.4)
-            
-            # T(RS) y T(A) ahora leerán 'None' y mostrarán '---'
-            rs485_t_val_k = current_readings["rs485"].get("rs485_temperature")
-            amb_t_val_c = current_readings["rs485"].get("ambient_temperature")
-            rs485_t_val_c = (rs485_t_val_k - 273.15) if rs485_t_val_k is not None else None
-            
-            rs485_t_val = _format_val(rs485_t_val_c, 1, 5)
-            amb_t_val = _format_val(amb_t_val_c, 1, 4)
 
-            # --- CAMBIO 2: Unidad cambiada a 'cm' ---
+            level_val = _format_val(current_readings["rs485"].get("level"), 1, 5) # 1 decimal (ej: 19.4)
+            rs485_t_val_c = current_readings["rs485"].get("rs485_temperature")
+            amb_t_val_c = current_readings["rs485"].get("ambient_temperature")
+
+            rs485_t_val = _format_val(rs485_t_val_c, 1, 5) # ej: "24.0 "
+            amb_t_val = _format_val(amb_t_val_c, 1, 4)   # ej: "--- "
+
             line_3 = f"Level: {level_val} cm"
-            line_4 = f"TRS:{rs485_t_val} TA:{amb_t_val}"
+            line_4 = f"T.L.:{rs485_t_val} T.A.:{amb_t_val}"
 
         write((
             ljust_manual(day_line, 20),

@@ -310,7 +310,7 @@
             </div>
             <div class="card status-item">
                 <h2>Nivel</h2>
-                <p class="status-text"><span id="level-m">--</span> <span class="status-value">m</span></p>
+                <p class="status-text"><span id="level-m">--</span> <span class="status-value">cm</span></p>
             </div>
         </section>
         <section class="card">
@@ -368,7 +368,7 @@
                 </div>
                 
                 <div class="status-item">
-                    <h3>Temp. RS485</h3>
+                    <h3>Temp. Líquido</h3>
                     <p class="status-text"><span id="temp-rs-c">--</span> <span class="status-value">°C</span></p>
                 </div>
                 <div class="status-item">
@@ -385,7 +385,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- IDs de Elementos ---
+            // --- IDs de Elementos (Sin cambios) ---
             const pumpStatusEl = document.getElementById('pump-status');
             const pumpToggleEl = document.getElementById('pump-toggle');
             const inoculationDaysEl = document.getElementById('inoculation-days');
@@ -397,7 +397,7 @@
             // --- IDs Nuevos y Modificados ---
             const levelMEl = document.getElementById('level-m'); // Reemplaza a flowLpmEl
             const phValEl = document.getElementById('ph-val');
-            const doValEl = document.getElementById('do-val'); // ID actualizado
+            const doValEl = document.getElementById('do-val'); 
             const nh3PpmEl = document.getElementById('nh3-ppm');
             const s2hPpmEl = document.getElementById('s2h-ppm');
             const tempRsCEl = document.getElementById('temp-rs-c');
@@ -435,19 +435,20 @@
 
                     // --- NUEVA LÓGICA DE SENSORES ---
                     if (data.sensors) {
-                        // Grupo Analógico (claves actualizadas)
+                        // Grupo Analógico (Aún fallando con ENODEV)
                         phValEl.textContent = formatValue(data.sensors.analog.ph_value, 2);
                         doValEl.textContent = formatValue(data.sensors.analog.do_mg_l, 2);
                         nh3PpmEl.textContent = formatValue(data.sensors.analog.nh3_ppm, 2);
                         s2hPpmEl.textContent = formatValue(data.sensors.analog.s2h_ppm, 2);
 
-                        // Grupo RS485 (Sin cambios)
-                        levelMEl.textContent = formatValue(data.sensors.rs485.level, 2);
+                        // Grupo RS485
+                        levelMEl.textContent = formatValue(data.sensors.rs485.level, 1); 
                         
-                        const tempRSK = data.sensors.rs485.rs485_temperature;
-                        const tempRSC = (tempRSK !== null) ? (tempRSK - 273.15) : null;
-                        tempRsCEl.textContent = formatValue(tempRSC, 1);
+                        // --- CAMBIO: Ya no se necesita conversión de Kelvin ---
+                        const tempRS = data.sensors.rs485.rs485_temperature;
+                        tempRsCEl.textContent = formatValue(tempRS, 1);
                         
+                        // T(A) sigue siendo null
                         const tempAmb = data.sensors.rs485.ambient_temperature;
                         tempAmbCEl.textContent = formatValue(tempAmb, 1);
                     }
@@ -509,7 +510,6 @@
 
             pumpToggleEl.addEventListener('change', togglePump);
             resetInoculationBtn.addEventListener('click', resetInoculation);
-
             updateStatus();
             setInterval(updateStatus, 3000);
         });
